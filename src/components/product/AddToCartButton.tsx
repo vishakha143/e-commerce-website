@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-export function AddToCartButton({ stock, className }: { stock: number; className?: string }) {
+export function AddToCartButton({
+  stock,
+  onAdd,
+  className,
+}: {
+  stock: number;
+  onAdd: () => void;
+  className?: string;
+}) {
   const [added, setAdded] = useState(false);
 
   if (stock <= 0) {
@@ -25,6 +33,7 @@ export function AddToCartButton({ stock, className }: { stock: number; className
     <button
       type="button"
       onClick={() => {
+        onAdd();
         setAdded(true);
         setTimeout(() => setAdded(false), 1500);
       }}

@@ -7,12 +7,15 @@ import { Search, Heart, User, ShoppingBag, Menu } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { SearchOverlay } from "@/components/search/SearchOverlay";
+import { CartDrawer } from "@/components/cart/CartDrawer";
+import { useCartStore } from "@/store/cartStore";
 
 export function Navbar() {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const cartCount = 0;
+  const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
+  const openCartDrawer = useCartStore((s) => s.openDrawer);
 
   return (
     <header className="border-b border-border bg-card">
@@ -33,38 +36,47 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-5 text-foreground">
+        <div className="flex items-center gap-4 text-foreground">
+          <div className="hidden md:flex items-center gap-5">
+            <button
+              type="button"
+              aria-label="Search"
+              className="cursor-pointer"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search size={18} />
+            </button>
+            <Link href="/wishlist" aria-label="Wishlist">
+              <Heart size={18} />
+            </Link>
+            <Link href={session?.user ? "/account" : "/login"} aria-label="Account">
+              <User size={18} />
+            </Link>
+          </div>
+
           <button
             type="button"
-            aria-label="Search"
-            className="cursor-pointer"
-            onClick={() => setSearchOpen(true)}
+            aria-label="Bag"
+            onClick={openCartDrawer}
+            className="flex items-center gap-1.5 text-sm font-medium cursor-pointer"
           >
-            <Search size={18} />
-          </button>
-          <Link href="/wishlist" aria-label="Wishlist">
-            <Heart size={18} />
-          </Link>
-          <Link href={session?.user ? "/account" : "/login"} aria-label="Account">
-            <User size={18} />
-          </Link>
-          <Link href="/cart" aria-label="Bag" className="flex items-center gap-1.5 text-sm font-medium">
             <ShoppingBag size={18} />
             <span>({cartCount})</span>
-          </Link>
-        </div>
+          </button>
 
-        <button
-          className="md:hidden cursor-pointer"
-          aria-label="Open menu"
-          onClick={() => setMobileOpen(true)}
-        >
-          <Menu size={22} />
-        </button>
+          <button
+            className="md:hidden cursor-pointer"
+            aria-label="Open menu"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu size={22} />
+          </button>
+        </div>
       </div>
 
       <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
+      <CartDrawer />
     </header>
   );
 }

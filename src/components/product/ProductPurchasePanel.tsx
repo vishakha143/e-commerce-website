@@ -5,9 +5,12 @@ import { ColorSelector } from "@/components/product/ColorSelector";
 import { SizeSelector } from "@/components/product/SizeSelector";
 import { AddToCartButton } from "@/components/product/AddToCartButton";
 import { WishlistButton } from "@/components/product/WishlistButton";
+import { useCartStore } from "@/store/cartStore";
 import type { Product } from "@/types/product";
 
 export function ProductPurchasePanel({ product }: { product: Product }) {
+  const addItem = useCartStore((s) => s.addItem);
+
   const colors = useMemo(
     () =>
       Array.from(new Set(product.variants.map((v) => v.color).filter(Boolean))) as string[],
@@ -35,15 +38,32 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
     .map((v) => v.size)
     .filter((size): size is string => Boolean(size));
 
-  const selectedVariant = product.variants.find(
-    (v) => v.color === selectedColor && v.size === selectedSize,
-  );
+  // Products with no variants at all (e.g. an accessory with a single SKU)
+  // fall back to a synthetic always-in-stock variant keyed by slug.
+  const selectedVariant =
+    product.variants.length > 0
+      ? product.variants.find((v) => v.color === selectedColor && v.size === selectedSize)
+      : { sku: product.slug, stock: 999, color: undefined, size: undefined };
   const stock = selectedVariant?.stock ?? 0;
 
   function handleColorSelect(color: string) {
     setSelectedColor(color);
     const firstAvailable = product.variants.find((v) => v.color === color)?.size ?? "";
     setSelectedSize(firstAvailable);
+  }
+
+  function handleAdd() {
+    if (!selectedVariant) return;
+    addItem({
+      productId: product.id,
+      slug: product.slug,
+      sku: selectedVariant.sku,
+      name: product.name,
+      price: product.price,
+      quantity: qty,
+      color: selectedVariant.color,
+      size: selectedVariant.size,
+    });
   }
 
   return (
@@ -83,8 +103,8 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       </div>
 
       <div className="flex gap-3">
-        <AddToCartButton stock={stock} />
-        <WishlistButton size="lg" />
+        <AddToCartButton stock={stock} onAdd={handleAdd} />
+        <WishlistButton productId={product.id} size="lg" />
       </div>
     </div>
   );

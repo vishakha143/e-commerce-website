@@ -26,7 +26,7 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         )}
 
-        <WishlistButton className="absolute top-2 right-2" />
+        <WishlistButton productId={product.id} className="absolute top-2 right-2" />
       </div>
 
       <div className="flex flex-col gap-0.5">
