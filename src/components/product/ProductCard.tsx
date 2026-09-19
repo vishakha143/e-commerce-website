@@ -1,20 +1,17 @@
-"use client";
-
-import { useState } from "react";
-import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
+import { WishlistButton } from "@/components/product/WishlistButton";
 import type { Product } from "@/types/product";
 
 export function ProductCard({ product }: { product: Product }) {
-  const [wishlisted, setWishlisted] = useState(false);
   const badge = product.compareAtPrice ? "SALE" : product.isNew ? "NEW" : null;
+  const color = product.variants[0]?.color;
 
   return (
     <div className="flex flex-col gap-2.5 w-full">
       <div className="relative aspect-[3/4] w-full rounded-md overflow-hidden">
         <PlaceholderImage
-          label={`${product.name}${product.color ? `, ${product.color}` : ""}`}
+          label={`${product.name}${color ? `, ${color}` : ""}`}
           className="absolute inset-0"
         />
 
@@ -29,24 +26,12 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         )}
 
-        <button
-          type="button"
-          aria-label="Toggle wishlist"
-          onClick={() => setWishlisted((w) => !w)}
-          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center cursor-pointer"
-        >
-          <Heart
-            size={15}
-            className={wishlisted ? "fill-foreground text-foreground" : "text-[#D8D5CF]"}
-          />
-        </button>
+        <WishlistButton className="absolute top-2 right-2" />
       </div>
 
       <div className="flex flex-col gap-0.5">
         <div className="text-sm font-medium text-foreground">{product.name}</div>
-        {product.color && (
-          <div className="text-[13px] text-muted-foreground">{product.color}</div>
-        )}
+        {color && <div className="text-[13px] text-muted-foreground">{color}</div>}
         <div className="text-xs text-muted-foreground">
           ★ {product.rating} ({product.reviewCount})
         </div>

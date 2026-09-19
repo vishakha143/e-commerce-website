@@ -5,9 +5,11 @@ import { useState } from "react";
 import { Search, Heart, User, ShoppingBag, Menu } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { SearchOverlay } from "@/components/search/SearchOverlay";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const cartCount = 0;
 
   return (
@@ -30,7 +32,12 @@ export function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-5 text-foreground">
-          <button aria-label="Search" className="cursor-pointer">
+          <button
+            type="button"
+            aria-label="Search"
+            className="cursor-pointer"
+            onClick={() => setSearchOpen(true)}
+          >
             <Search size={18} />
           </button>
           <Link href="/wishlist" aria-label="Wishlist">
@@ -55,6 +62,7 @@ export function Navbar() {
       </div>
 
       <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
     </header>
   );
 }

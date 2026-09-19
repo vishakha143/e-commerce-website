@@ -37,9 +37,13 @@ export function MobileNav({
           </button>
         </div>
 
-        <div className="rounded-md border border-border px-3.5 py-2.5 text-sm text-muted-foreground">
+        <Link
+          href="/search"
+          onClick={onClose}
+          className="rounded-md border border-border px-3.5 py-2.5 text-sm text-muted-foreground"
+        >
           Search products...
-        </div>
+        </Link>
 
         <nav className="flex flex-col gap-1">
           {NAV_ITEMS.map((item) => (
