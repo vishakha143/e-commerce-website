@@ -4,6 +4,7 @@ import "./globals.css";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { Providers } from "@/components/providers/Providers";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -20,10 +21,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <AnnouncementBar />
-        <Navbar />
-        <main className="flex-1 flex flex-col">{children}</main>
-        <Footer />
+        <Providers>
+          <AnnouncementBar />
+          <Navbar />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

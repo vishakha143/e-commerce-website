@@ -7,6 +7,7 @@ import { ProductFilters } from "@/components/filters/ProductFilters";
 import { FilterDrawer } from "@/components/filters/FilterDrawer";
 import { SortDropdown } from "@/components/filters/SortDropdown";
 import { Pagination } from "@/components/ui/Pagination";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   MOCK_PRODUCTS,
   getProductList,
@@ -122,12 +123,7 @@ export default async function CategoryPage(props: PageProps<"/category/[...slug]
           {result.products.length > 0 ? (
             <ProductGrid products={result.products} />
           ) : (
-            <div className="flex flex-col items-center gap-2 py-20 text-center">
-              <p className="text-base font-semibold text-foreground">No products found</p>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Try adjusting your filters.
-              </p>
-            </div>
+            <EmptyState title="No products found" description="Try adjusting your filters." />
           )}
 
           <Pagination

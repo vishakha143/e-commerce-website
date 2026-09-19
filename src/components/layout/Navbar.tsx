@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Search, Heart, User, ShoppingBag, Menu } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { SearchOverlay } from "@/components/search/SearchOverlay";
 
 export function Navbar() {
+  const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const cartCount = 0;
@@ -43,7 +45,7 @@ export function Navbar() {
           <Link href="/wishlist" aria-label="Wishlist">
             <Heart size={18} />
           </Link>
-          <Link href="/account" aria-label="Account">
+          <Link href={session?.user ? "/account" : "/login"} aria-label="Account">
             <User size={18} />
           </Link>
           <Link href="/cart" aria-label="Bag" className="flex items-center gap-1.5 text-sm font-medium">

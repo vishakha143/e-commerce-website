@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import { X } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
 
@@ -18,6 +19,8 @@ export function MobileNav({
   open: boolean;
   onClose: () => void;
 }) {
+  const { data: session } = useSession();
+
   if (!open) return null;
 
   return (
@@ -60,13 +63,34 @@ export function MobileNav({
 
         <div className="h-px bg-border" />
 
-        <div className="flex flex-col gap-1 text-sm font-medium text-foreground/80">
-          {ACCOUNT_LINKS.map((link) => (
-            <Link key={link.label} href={link.href} onClick={onClose}>
-              {link.label}
+        {session?.user ? (
+          <div className="flex flex-col gap-1 text-sm font-medium text-foreground/80">
+            {ACCOUNT_LINKS.map((link) => (
+              <Link key={link.label} href={link.href} onClick={onClose}>
+                {link.label}
+              </Link>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                signOut({ callbackUrl: "/" });
+              }}
+              className="text-left cursor-pointer py-1"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1 text-sm font-medium text-foreground/80">
+            <Link href="/login" onClick={onClose}>
+              Login
             </Link>
-          ))}
-        </div>
+            <Link href="/register" onClick={onClose}>
+              Create Account
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

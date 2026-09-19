@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { getProductList } from "@/lib/mock-products";
 
 export const metadata: Metadata = {
@@ -24,12 +25,10 @@ export default async function SearchPage(props: PageProps<"/search">) {
         result.products.length > 0 ? (
           <ProductGrid products={result.products} />
         ) : (
-          <div className="flex flex-col items-center gap-2 py-20 text-center">
-            <p className="text-base font-semibold text-foreground">No products found</p>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Try a different search term or browse our categories.
-            </p>
-          </div>
+          <EmptyState
+            title="No products found"
+            description="Try a different search term or browse our categories."
+          />
         )
       ) : (
         <p className="text-sm text-muted-foreground">
