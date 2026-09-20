@@ -3,12 +3,16 @@ import type { Product, ProductListParams, ProductListResult } from "@/types/prod
 /**
  * In-memory catalog standing in for the MongoDB-backed Product collection.
  * getProductList() mirrors the query contract productService.getProducts()
- * will expose once MONGODB_URI is configured (see src/services/productService.ts),
- * so pages won't need to change when the real service is wired in.
+ * will expose once pages are wired to it, so pages won't need to change
+ * when the real service is wired in.
+ *
+ * The `id` on each entry is the real Mongo _id from scripts/seed.ts (run
+ * against the same data) — cart/wishlist/order creation validate against
+ * the actual Product documents, so these must stay in sync with a reseed.
  */
 export const MOCK_PRODUCTS: Product[] = [
   {
-    id: "1",
+    id: "6ab0277a2b3944f12f61cdb5",
     slug: "oversized-black-t-shirt",
     name: "Oversized Black T-Shirt",
     category: "men",
@@ -29,7 +33,7 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "2",
+    id: "6ab0277a2b3944f12f61cdb6",
     slug: "minimal-white-tee",
     name: "Minimal White Tee",
     category: "men",
@@ -48,7 +52,7 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "3",
+    id: "6ab0277a2b3944f12f61cdb7",
     slug: "graphic-brown-tee",
     name: "Graphic Brown Tee",
     category: "men",
@@ -65,7 +69,7 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "4",
+    id: "6ab0277a2b3944f12f61cdb8",
     slug: "relaxed-fit-olive-tee",
     name: "Relaxed Fit Olive Tee",
     category: "women",
@@ -84,7 +88,7 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "5",
+    id: "6ab0277a2b3944f12f61cdb9",
     slug: "classic-polo",
     name: "Classic Polo",
     category: "men",
@@ -102,7 +106,7 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "6",
+    id: "6ab0277a2b3944f12f61cdba",
     slug: "white-sneakers",
     name: "White Sneakers",
     category: "footwear",
@@ -122,7 +126,7 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "7",
+    id: "6ab0277a2b3944f12f61cdbb",
     slug: "casual-sneakers",
     name: "Casual Sneakers",
     category: "footwear",
@@ -139,7 +143,7 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "8",
+    id: "6ab0277a2b3944f12f61cdbc",
     slug: "leather-belt",
     name: "Leather Belt",
     category: "accessories",
@@ -156,7 +160,7 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "9",
+    id: "6ab0277a2b3944f12f61cdbd",
     slug: "canvas-belt",
     name: "Canvas Belt",
     category: "accessories",
