@@ -28,7 +28,14 @@ const ProductSchema = new Schema(
     isNew: { type: Boolean, default: false },
     tags: { type: [String], default: [] },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    // `isNew` shadows Mongoose's internal Document.isNew flag. We only ever
+    // read Products via .lean() or mutate via updateOne, never rely on that
+    // flag, and the architecture doc names this field `isNew` — so suppress
+    // the warning rather than diverge from the documented schema.
+    suppressReservedKeysWarning: true,
+  },
 );
 
 ProductSchema.index({ category: 1 });

@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { useCartStore } from "@/store/cartStore";
-
-const FREE_SHIPPING_THRESHOLD = 150;
+import { FREE_SHIPPING_THRESHOLD, calculateShipping } from "@/lib/pricing";
 
 export function CartSummary({ variant = "page" }: { variant?: "drawer" | "page" }) {
   const items = useCartStore((s) => s.items);
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 8;
+  const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
 

@@ -17,7 +17,7 @@ export const authConfig = {
       if (pathname.startsWith("/admin")) {
         return isLoggedIn && auth?.user?.role === "admin";
       }
-      if (pathname.startsWith("/account")) {
+      if (pathname.startsWith("/account") || pathname.startsWith("/checkout")) {
         return isLoggedIn;
       }
       return true;

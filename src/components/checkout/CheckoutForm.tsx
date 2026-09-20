@@ -1,0 +1,70 @@
+"use client";
+
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useCartStore } from "@/store/cartStore";
+import { placeOrderAction, type CheckoutState } from "@/actions/order";
+import { AddressForm } from "@/components/checkout/AddressForm";
+import { PaymentMethod } from "@/components/checkout/PaymentMethod";
+import { CheckoutSummary } from "@/components/checkout/CheckoutSummary";
+import { EmptyState } from "@/components/ui/EmptyState";
+
+const initialState: CheckoutState = {};
+
+export function CheckoutForm() {
+  const router = useRouter();
+  const items = useCartStore((s) => s.items);
+  const clearCart = useCartStore((s) => s.clear);
+  const boundAction = placeOrderAction.bind(null, items);
+  const [state, formAction, pending] = useActionState(boundAction, initialState);
+
+  useEffect(() => {
+    if (state.orderId) {
+      clearCart();
+      router.push(`/checkout/confirmation?orderId=${state.orderId}`);
+    }
+  }, [state.orderId, clearCart, router]);
+
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        title="Your bag is empty"
+        description="Add items to your bag before checking out."
+        action={
+          <Link
+            href="/shop"
+            className="mt-2 px-5 py-3 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide"
+          >
+            START SHOPPING
+          </Link>
+        }
+      />
+    );
+  }
+
+  return (
+    <form action={formAction} className="flex flex-col md:flex-row gap-8">
+      <div className="flex-1 max-w-[520px] flex flex-col gap-5">
+        {state.error && (
+          <p className="text-sm text-[#7A3E33] bg-[#FCEFEC] border border-[#EAD6D0] rounded-md px-3.5 py-2.5">
+            {state.error}
+          </p>
+        )}
+
+        <AddressForm />
+        <PaymentMethod />
+
+        <button
+          type="submit"
+          disabled={pending}
+          className="w-full py-3.5 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide cursor-pointer disabled:opacity-60"
+        >
+          {pending ? "PLACING ORDER..." : "PLACE ORDER"}
+        </button>
+      </div>
+
+      <CheckoutSummary />
+    </form>
+  );
+}
