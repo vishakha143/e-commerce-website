@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { MOCK_PRODUCTS } from "@/lib/mock-products";
+import { getProducts } from "@/services/productService";
 
-export function TrendingProducts() {
-  const products = MOCK_PRODUCTS.slice(0, 4);
+export async function TrendingProducts() {
+  const { products } = await getProducts({ sort: "featured", limit: 4 });
 
   return (
     <section className="px-4 md:px-8 py-10 max-w-[1600px] mx-auto w-full">

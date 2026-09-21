@@ -1,16 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { useCartStore } from "@/store/cartStore";
 import { ProductCard } from "@/components/product/ProductCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { MOCK_PRODUCTS } from "@/lib/mock-products";
+import { getProductsByIdsAction } from "@/actions/product";
+import type { Product } from "@/types/product";
 
 export default function WishlistPage() {
   const ids = useWishlistStore((s) => s.ids);
   const addItem = useCartStore((s) => s.addItem);
-  const products = MOCK_PRODUCTS.filter((p) => ids.includes(p.id));
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = ids.length > 0 ? getProductsByIdsAction(ids) : Promise.resolve([]);
+    fetchProducts.then(setProducts);
+  }, [ids]);
 
   return (
     <div className="px-4 md:px-8 py-10 max-w-[1600px] mx-auto w-full">

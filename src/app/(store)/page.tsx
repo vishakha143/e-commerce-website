@@ -5,6 +5,10 @@ import { NewArrivals } from "@/components/home/NewArrivals";
 import { ShopTheLook } from "@/components/home/ShopTheLook";
 import { TrustSection } from "@/components/home/TrustSection";
 
+// Trending/New Arrivals pull from the DB; without this the page would be
+// frozen at build time and admin product changes wouldn't show until redeploy.
+export const revalidate = 60;
+
 export default function Home() {
   return (
     <>

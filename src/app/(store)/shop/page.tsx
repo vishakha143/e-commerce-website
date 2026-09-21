@@ -6,11 +6,11 @@ import { SortDropdown } from "@/components/filters/SortDropdown";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
-  getProductList,
+  getProducts,
   getAvailableSizes,
   getAvailableColors,
   getAvailableBrands,
-} from "@/lib/mock-products";
+} from "@/services/productService";
 import { parseProductListParams } from "@/lib/product-query";
 
 export const metadata: Metadata = {
@@ -21,12 +21,13 @@ export default async function ShopPage(props: PageProps<"/shop">) {
   const sp = await props.searchParams;
   const params = parseProductListParams(sp);
 
-  const result = getProductList(params);
-  const facets = {
-    sizes: getAvailableSizes(),
-    colors: getAvailableColors(),
-    brands: getAvailableBrands(),
-  };
+  const [result, sizes, colors, brands] = await Promise.all([
+    getProducts(params),
+    getAvailableSizes(),
+    getAvailableColors(),
+    getAvailableBrands(),
+  ]);
+  const facets = { sizes, colors, brands };
   const searchParamsForLinks = sp as Record<string, string>;
 
   return (

@@ -1,9 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
-import { createOrder } from "@/services/orderService";
+import { createOrder, updateOrderStatus } from "@/services/orderService";
 import type { CartItem } from "@/types/cart";
-import type { ShippingAddress } from "@/types/order";
+import type { OrderStatus, ShippingAddress } from "@/types/order";
 
 export interface CheckoutState {
   error?: string;
@@ -39,4 +40,15 @@ export async function placeOrderAction(
   }
 
   return { orderId: result.orderId };
+}
+
+export async function updateOrderStatusAction(orderId: string, status: OrderStatus) {
+  const session = await auth();
+  if (session?.user?.role !== "admin") {
+    throw new Error("Forbidden");
+  }
+
+  await updateOrderStatus(orderId, status);
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
 }

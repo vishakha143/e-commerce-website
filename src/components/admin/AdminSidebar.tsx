@@ -2,25 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Profile", href: "/account" },
-  { label: "Orders", href: "/account/orders" },
-  { label: "Wishlist", href: "/account/wishlist" },
-  { label: "Addresses", href: "/account/addresses" },
-  { label: "Settings", href: "/account/settings" },
+  { label: "Dashboard", href: "/admin" },
+  { label: "Products", href: "/admin/products" },
+  { label: "Orders", href: "/admin/orders" },
+  { label: "Customers", href: "/admin/customers" },
+  { label: "Categories", href: "/admin/categories" },
+  { label: "Reviews", href: "/admin/reviews" },
+  { label: "Analytics", href: "/admin/analytics" },
 ] as const;
 
-export function AccountSidebar() {
+export function AdminSidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
 
   return (
     <aside className="w-full md:w-[200px] shrink-0 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible">
       {NAV_ITEMS.map((item) => {
-        const active = pathname === item.href;
+        const active =
+          item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
         return (
           <Link
             key={item.href}
@@ -34,18 +36,13 @@ export function AccountSidebar() {
           </Link>
         );
       })}
-      {session?.user?.role === "admin" && (
-        <>
-          <div className="hidden md:block h-px bg-border my-2.5" />
-          <Link
-            href="/admin"
-            className="px-2.5 py-2.5 text-sm font-medium text-foreground whitespace-nowrap"
-          >
-            Admin Dashboard →
-          </Link>
-        </>
-      )}
       <div className="hidden md:block h-px bg-border my-2.5" />
+      <Link
+        href="/"
+        className="px-2.5 py-2.5 text-sm font-medium text-muted-foreground whitespace-nowrap"
+      >
+        ← Back to Store
+      </Link>
       <button
         type="button"
         onClick={() => signOut({ callbackUrl: "/" })}

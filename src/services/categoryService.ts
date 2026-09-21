@@ -27,3 +27,26 @@ export async function getCategoryTree(): Promise<CategoryNode[]> {
 
   return roots;
 }
+
+export async function getAllCategoriesFlat() {
+  await connectDB();
+  const docs = await Category.find().sort({ name: 1 }).lean();
+  const nameById = new Map(docs.map((d) => [d._id.toString(), d.name]));
+
+  return docs.map((doc) => ({
+    id: doc._id.toString(),
+    name: doc.name,
+    slug: doc.slug,
+    parentName: doc.parent ? (nameById.get(doc.parent.toString()) ?? null) : null,
+  }));
+}
+
+export async function createCategory(data: { name: string; slug: string; parent: string | null }) {
+  await connectDB();
+  return Category.create({ name: data.name, slug: data.slug, parent: data.parent });
+}
+
+export async function deleteCategory(id: string) {
+  await connectDB();
+  await Category.deleteOne({ _id: id });
+}

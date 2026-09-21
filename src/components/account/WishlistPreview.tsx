@@ -1,14 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { MOCK_PRODUCTS } from "@/lib/mock-products";
+import { getProductsByIdsAction } from "@/actions/product";
+import type { Product } from "@/types/product";
 
 export function WishlistPreview() {
   const ids = useWishlistStore((s) => s.ids);
-  const products = MOCK_PRODUCTS.filter((p) => ids.includes(p.id)).slice(0, 4);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchProducts =
+      ids.length > 0 ? getProductsByIdsAction(ids.slice(0, 4)) : Promise.resolve([]);
+    fetchProducts.then(setProducts);
+  }, [ids]);
 
   if (products.length === 0) {
     return (

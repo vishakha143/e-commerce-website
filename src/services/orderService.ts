@@ -3,7 +3,7 @@ import { Order } from "@/models/Order";
 import { Product } from "@/models/Product";
 import { calculateShipping } from "@/lib/pricing";
 import type { CartItem } from "@/types/cart";
-import type { ShippingAddress } from "@/types/order";
+import type { OrderStatus, ShippingAddress } from "@/types/order";
 
 export interface CreateOrderResult {
   success: boolean;
@@ -104,4 +104,19 @@ export async function getOrdersByUserId(userId: string) {
 export async function getOrderById(orderId: string, userId: string) {
   await connectDB();
   return Order.findOne({ _id: orderId, user: userId }).lean();
+}
+
+export async function getAllOrders() {
+  await connectDB();
+  return Order.find().sort({ createdAt: -1 }).populate("user", "name email").lean();
+}
+
+export async function getOrderByIdAdmin(orderId: string) {
+  await connectDB();
+  return Order.findById(orderId).populate("user", "name email").lean();
+}
+
+export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+  await connectDB();
+  return Order.findByIdAndUpdate(orderId, { status }, { new: true }).lean();
 }

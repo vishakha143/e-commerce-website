@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { MOCK_PRODUCTS } from "@/lib/mock-products";
+import { getNewArrivals } from "@/services/productService";
 
-export function NewArrivals() {
-  const products = MOCK_PRODUCTS.filter((p) => p.isNew).slice(0, 4);
+export async function NewArrivals() {
+  const products = await getNewArrivals(4);
   if (products.length === 0) return null;
 
   return (

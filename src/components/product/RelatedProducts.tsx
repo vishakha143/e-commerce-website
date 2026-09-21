@@ -1,9 +1,9 @@
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { getRelatedProducts } from "@/lib/mock-products";
+import { getRelatedProducts } from "@/services/productService";
 import type { Product } from "@/types/product";
 
-export function RelatedProducts({ product }: { product: Product }) {
-  const related = getRelatedProducts(product);
+export async function RelatedProducts({ product }: { product: Product }) {
+  const related = await getRelatedProducts(product);
   if (related.length === 0) return null;
 
   return (

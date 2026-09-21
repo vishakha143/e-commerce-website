@@ -1,11 +1,11 @@
 import { connectDB } from "@/lib/mongodb";
 import { Product } from "@/models/Product";
 import type { ProductListParams, ProductListResult } from "@/types/product";
+import type { ProductInput } from "@/lib/validations/product";
 
 /**
- * Mirrors getProductList() in src/lib/mock-products.ts. Once MONGODB_URI
- * is configured, pages can swap their mock-data import for this service
- * without changing call sites.
+ * Product listing with search/filter/sort/pagination — the storefront's
+ * single source of product data (shop, category, search, homepage).
  */
 export async function getProducts(
   params: ProductListParams = {},
@@ -62,6 +62,79 @@ export async function getProductBySlug(slug: string) {
   await connectDB();
   const doc = await Product.findOne({ slug }).lean();
   return doc ? serializeProduct(doc) : null;
+}
+
+export async function getProductsByIds(ids: string[]) {
+  if (ids.length === 0) return [];
+  await connectDB();
+  const docs = await Product.find({ _id: { $in: ids } }).lean();
+  return docs.map(serializeProduct);
+}
+
+export async function getRelatedProducts(product: { id: string; category: string }, limit = 4) {
+  await connectDB();
+  const docs = await Product.find({ category: product.category, _id: { $ne: product.id } })
+    .limit(limit)
+    .lean();
+  return docs.map(serializeProduct);
+}
+
+export async function getNewArrivals(limit = 4) {
+  await connectDB();
+  const docs = await Product.find({ isNew: true }).sort({ createdAt: -1 }).limit(limit).lean();
+  return docs.map(serializeProduct);
+}
+
+export interface ProductFacetScope {
+  category?: string;
+  subcategory?: string;
+}
+
+export async function getAvailableSizes(scope: ProductFacetScope = {}): Promise<string[]> {
+  await connectDB();
+  const sizes = await Product.distinct("variants.size", scope);
+  return (sizes as unknown as string[]).filter(Boolean).sort();
+}
+
+export async function getAvailableColors(scope: ProductFacetScope = {}): Promise<string[]> {
+  await connectDB();
+  const colors = await Product.distinct("variants.color", scope);
+  return (colors as unknown as string[]).filter(Boolean).sort();
+}
+
+export async function getAvailableBrands(scope: ProductFacetScope = {}): Promise<string[]> {
+  await connectDB();
+  const brands = await Product.distinct("brand", scope);
+  return (brands as unknown as string[]).filter(Boolean).sort();
+}
+
+export async function getAllProductsAdmin() {
+  await connectDB();
+  const docs = await Product.find().sort({ createdAt: -1 }).lean();
+  return docs.map(serializeProduct);
+}
+
+export async function getProductByIdAdmin(id: string) {
+  await connectDB();
+  const doc = await Product.findById(id).lean();
+  return doc ? serializeProduct(doc) : null;
+}
+
+export async function createProduct(data: ProductInput) {
+  await connectDB();
+  const doc = await Product.create(data);
+  return serializeProduct(doc.toObject());
+}
+
+export async function updateProduct(id: string, data: ProductInput) {
+  await connectDB();
+  const doc = await Product.findByIdAndUpdate(id, data, { new: true }).lean();
+  return doc ? serializeProduct(doc) : null;
+}
+
+export async function deleteProduct(id: string) {
+  await connectDB();
+  await Product.findByIdAndDelete(id);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

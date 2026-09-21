@@ -4,20 +4,20 @@ import { cn } from "@/lib/utils";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
-import { getProductBySlug } from "@/lib/mock-products";
+import { getProductBySlug } from "@/services/productService";
 import { findCategory, findSubcategory } from "@/lib/categories";
 
 export async function generateMetadata(
   props: PageProps<"/product/[slug]">,
 ): Promise<Metadata> {
   const { slug } = await props.params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   return { title: product ? `${product.name} | Fashion` : "Product | Fashion" };
 }
 
 export default async function ProductPage(props: PageProps<"/product/[slug]">) {
   const { slug } = await props.params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
   const category = findCategory(product.category);

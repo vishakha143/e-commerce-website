@@ -18,3 +18,8 @@ export async function createUser(data: {
     password: data.passwordHash,
   });
 }
+
+export async function getAllUsers() {
+  await connectDB();
+  return User.find().select("-password").sort({ createdAt: -1 }).lean();
+}

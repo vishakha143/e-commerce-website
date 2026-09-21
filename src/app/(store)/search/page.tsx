@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getProductList } from "@/lib/mock-products";
+import { getProducts } from "@/services/productService";
 
 export const metadata: Metadata = {
   title: "Search | Fashion",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default async function SearchPage(props: PageProps<"/search">) {
   const { q } = await props.searchParams;
   const query = Array.isArray(q) ? q[0] : q;
-  const result = query ? getProductList({ search: query, limit: 24 }) : null;
+  const result = query ? await getProducts({ search: query, limit: 24 }) : null;
 
   return (
     <div className="px-4 md:px-8 py-10 max-w-[1600px] mx-auto w-full">

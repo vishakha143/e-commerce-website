@@ -1,17 +1,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { ProductCard } from "@/components/product/ProductCard";
-import { MOCK_PRODUCTS } from "@/lib/mock-products";
+import { getSuggestedProductsAction } from "@/actions/product";
+import type { Product } from "@/types/product";
 
 const POPULAR_SEARCHES = ["New Arrivals", "Denim", "Accessories", "Sale"];
 
 export function SearchOverlay({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const suggested = MOCK_PRODUCTS.slice(0, 3);
+  const [suggested, setSuggested] = useState<Product[]>([]);
+
+  useEffect(() => {
+    getSuggestedProductsAction(3).then(setSuggested);
+  }, []);
 
   function submit(term: string) {
     if (!term.trim()) return;
@@ -65,16 +70,18 @@ export function SearchOverlay({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold tracking-wide text-muted-foreground mb-3.5">
-              SUGGESTED PRODUCTS
+          {suggested.length > 0 && (
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold tracking-wide text-muted-foreground mb-3.5">
+                SUGGESTED PRODUCTS
+              </div>
+              <div className="grid grid-cols-3 gap-5">
+                {suggested.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-5">
-              {suggested.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

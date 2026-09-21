@@ -1,14 +1,11 @@
-import type { Product, ProductListParams, ProductListResult } from "@/types/product";
+import type { Product } from "@/types/product";
 
 /**
- * In-memory catalog standing in for the MongoDB-backed Product collection.
- * getProductList() mirrors the query contract productService.getProducts()
- * will expose once pages are wired to it, so pages won't need to change
- * when the real service is wired in.
- *
- * The `id` on each entry is the real Mongo _id from scripts/seed.ts (run
- * against the same data) — cart/wishlist/order creation validate against
- * the actual Product documents, so these must stay in sync with a reseed.
+ * Seed data for scripts/seed.ts — the storefront reads from MongoDB via
+ * src/services/productService.ts, not from this file. The `id` on each
+ * entry is the real Mongo _id from the last seed run; cart/wishlist/order
+ * creation validate against the actual Product documents, so these must
+ * stay in sync with a reseed.
  */
 export const MOCK_PRODUCTS: Product[] = [
   {
@@ -179,89 +176,3 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
   },
 ];
-
-export function getProductBySlug(slug: string): Product | undefined {
-  return MOCK_PRODUCTS.find((p) => p.slug === slug);
-}
-
-export function getProductList(params: ProductListParams = {}): ProductListResult {
-  let results = [...MOCK_PRODUCTS];
-
-  if (params.category) {
-    results = results.filter((p) => p.category === params.category);
-  }
-  if (params.subcategory) {
-    results = results.filter((p) => p.subcategory === params.subcategory);
-  }
-  if (params.brand) {
-    results = results.filter(
-      (p) => p.brand?.toLowerCase() === params.brand?.toLowerCase(),
-    );
-  }
-  if (params.size) {
-    results = results.filter((p) => p.variants.some((v) => v.size === params.size));
-  }
-  if (params.color) {
-    results = results.filter((p) =>
-      p.variants.some((v) => v.color?.toLowerCase() === params.color?.toLowerCase()),
-    );
-  }
-  if (params.minPrice !== undefined) {
-    results = results.filter((p) => p.price >= params.minPrice!);
-  }
-  if (params.maxPrice !== undefined) {
-    results = results.filter((p) => p.price <= params.maxPrice!);
-  }
-  if (params.search) {
-    const q = params.search.toLowerCase();
-    results = results.filter((p) =>
-      [p.name, p.category, p.subcategory, p.brand, ...(p.tags ?? [])]
-        .filter((field): field is string => Boolean(field))
-        .some((field) => field.toLowerCase().includes(q)),
-    );
-  }
-
-  switch (params.sort) {
-    case "price_asc":
-      results.sort((a, b) => a.price - b.price);
-      break;
-    case "price_desc":
-      results.sort((a, b) => b.price - a.price);
-      break;
-    case "newest":
-      results.sort((a, b) => Number(b.isNew) - Number(a.isNew));
-      break;
-    default:
-      results.sort((a, b) => Number(b.featured) - Number(a.featured));
-  }
-
-  const page = params.page && params.page > 0 ? params.page : 1;
-  const limit = params.limit && params.limit > 0 ? params.limit : 12;
-  const total = results.length;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const start = (page - 1) * limit;
-
-  return { products: results.slice(start, start + limit), total, page, limit, totalPages };
-}
-
-export function getRelatedProducts(product: Product, limit = 4): Product[] {
-  return MOCK_PRODUCTS.filter(
-    (p) => p.id !== product.id && p.category === product.category,
-  ).slice(0, limit);
-}
-
-export function getAvailableSizes(products: Product[] = MOCK_PRODUCTS): string[] {
-  return Array.from(
-    new Set(products.flatMap((p) => p.variants.map((v) => v.size).filter(Boolean))),
-  ) as string[];
-}
-
-export function getAvailableColors(products: Product[] = MOCK_PRODUCTS): string[] {
-  return Array.from(
-    new Set(products.flatMap((p) => p.variants.map((v) => v.color).filter(Boolean))),
-  ) as string[];
-}
-
-export function getAvailableBrands(products: Product[] = MOCK_PRODUCTS): string[] {
-  return Array.from(new Set(products.map((p) => p.brand).filter(Boolean))) as string[];
-}

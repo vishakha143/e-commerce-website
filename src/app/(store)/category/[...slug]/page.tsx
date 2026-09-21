@@ -9,12 +9,11 @@ import { SortDropdown } from "@/components/filters/SortDropdown";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
-  MOCK_PRODUCTS,
-  getProductList,
+  getProducts,
   getAvailableSizes,
   getAvailableColors,
   getAvailableBrands,
-} from "@/lib/mock-products";
+} from "@/services/productService";
 import { findCategory, findSubcategory } from "@/lib/categories";
 import { parseProductListParams } from "@/lib/product-query";
 
@@ -51,17 +50,15 @@ export default async function CategoryPage(props: PageProps<"/category/[...slug]
     category: categorySlug,
     subcategory: subcategorySlug,
   });
-  const result = getProductList(params);
+  const facetScope = { category: categorySlug, ...(subcategorySlug && { subcategory: subcategorySlug }) };
 
-  const scopedProducts = MOCK_PRODUCTS.filter(
-    (p) =>
-      p.category === categorySlug && (!subcategorySlug || p.subcategory === subcategorySlug),
-  );
-  const facets = {
-    sizes: getAvailableSizes(scopedProducts),
-    colors: getAvailableColors(scopedProducts),
-    brands: getAvailableBrands(scopedProducts),
-  };
+  const [result, sizes, colors, brands] = await Promise.all([
+    getProducts(params),
+    getAvailableSizes(facetScope),
+    getAvailableColors(facetScope),
+    getAvailableBrands(facetScope),
+  ]);
+  const facets = { sizes, colors, brands };
   const searchParamsForLinks = sp as Record<string, string>;
 
   return (
