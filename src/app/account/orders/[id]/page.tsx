@@ -5,7 +5,8 @@ import { getOrderById } from "@/services/orderService";
 import type { OrderItem } from "@/types/order";
 
 export const metadata: Metadata = {
-  title: "Order Details | Fashion",
+  title: "Order Details",
+  robots: { index: false, follow: false },
 };
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {

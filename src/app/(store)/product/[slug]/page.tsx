@@ -6,13 +6,25 @@ import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel"
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { getProductBySlug } from "@/services/productService";
 import { findCategory, findSubcategory } from "@/lib/categories";
+import { SITE_URL } from "@/lib/constants";
 
 export async function generateMetadata(
   props: PageProps<"/product/[slug]">,
 ): Promise<Metadata> {
   const { slug } = await props.params;
   const product = await getProductBySlug(slug);
-  return { title: product ? `${product.name} | Fashion` : "Product | Fashion" };
+  if (!product) return { title: "Product Not Found" };
+
+  const description =
+    product.description ??
+    `${product.name} — $${product.price.toFixed(2)}. Shop ${product.category} essentials.`;
+
+  return {
+    title: product.name,
+    description,
+    openGraph: { title: product.name, description, type: "website" },
+    alternates: { canonical: `/product/${product.slug}` },
+  };
 }
 
 export default async function ProductPage(props: PageProps<"/product/[slug]">) {
@@ -29,8 +41,41 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : 0;
 
+  const totalStock = product.variants.reduce(
+    (sum: number, v: { stock: number }) => sum + v.stock,
+    0,
+  );
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
+    offers: {
+      "@type": "Offer",
+      url: `${SITE_URL}/product/${product.slug}`,
+      priceCurrency: "USD",
+      price: product.price,
+      availability:
+        totalStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+    },
+    aggregateRating:
+      product.reviewCount > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: product.rating,
+            reviewCount: product.reviewCount,
+          }
+        : undefined,
+  };
+
   return (
     <div className="px-4 md:px-8 py-6 max-w-[1600px] mx-auto w-full">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+
       <p className="text-xs text-muted-foreground mb-4">
         Home{category ? ` / ${category.name}` : ""}
         {subcategory ? ` / ${subcategory.name}` : ""} / {product.name}

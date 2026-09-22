@@ -4,7 +4,8 @@ import { BarList } from "@/components/admin/BarList";
 import { getRevenueSeries, getTopProducts, getSalesByCategory } from "@/services/adminService";
 
 export const metadata: Metadata = {
-  title: "Analytics | Admin | Fashion",
+  title: "Admin · Analytics",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminAnalyticsPage() {

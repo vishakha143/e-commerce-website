@@ -75,7 +75,7 @@ export function Navbar() {
       </div>
 
       <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
-      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <CartDrawer />
     </header>
   );

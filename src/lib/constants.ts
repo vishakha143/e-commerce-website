@@ -1,5 +1,8 @@
 export const BRAND_NAME = "Fashion";
 
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://e-commerce-website-gamma-blond-41.vercel.app";
+
 export const ANNOUNCEMENT_TEXT =
   "FREE SHIPPING OVER $150 · EASY 30-DAY RETURNS · SECURE CHECKOUT";
 

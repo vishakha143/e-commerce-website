@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { WishlistPreview } from "@/components/account/WishlistPreview";
 
 export const metadata: Metadata = {
-  title: "My Wishlist | Fashion",
+  title: "My Wishlist",
+  robots: { index: false, follow: false },
 };
 
 export default function AccountWishlistPage() {

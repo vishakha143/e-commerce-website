@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Settings | Fashion",
+  title: "Settings",
+  robots: { index: false, follow: false },
 };
 
 export default async function SettingsPage() {

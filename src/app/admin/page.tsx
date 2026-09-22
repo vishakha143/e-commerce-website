@@ -10,7 +10,8 @@ import {
 } from "@/services/adminService";
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard | Fashion",
+  title: "Admin · Dashboard",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminDashboardPage() {

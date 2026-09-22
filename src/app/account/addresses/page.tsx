@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export const metadata: Metadata = {
-  title: "My Addresses | Fashion",
+  title: "My Addresses",
+  robots: { index: false, follow: false },
 };
 
 export default function AddressesPage() {

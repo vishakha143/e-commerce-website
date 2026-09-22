@@ -26,7 +26,19 @@ export async function generateMetadata(
   const subcategory = subcategorySlug
     ? findSubcategory(categorySlug, subcategorySlug)
     : undefined;
-  return { title: `${subcategory?.name ?? category?.name ?? "Category"} | Fashion` };
+  const name = subcategory?.name ?? category?.name ?? "Category";
+  const description = `Shop ${name} — everyday essentials, timeless style.`;
+
+  return {
+    title: name,
+    description,
+    openGraph: { title: name, description, type: "website" },
+    alternates: {
+      canonical: subcategory
+        ? `/category/${categorySlug}/${subcategorySlug}`
+        : `/category/${categorySlug}`,
+    },
+  };
 }
 
 export default async function CategoryPage(props: PageProps<"/category/[...slug]">) {

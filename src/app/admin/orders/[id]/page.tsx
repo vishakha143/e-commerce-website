@@ -5,7 +5,8 @@ import { getOrderByIdAdmin } from "@/services/orderService";
 import type { OrderItem, OrderStatus } from "@/types/order";
 
 export const metadata: Metadata = {
-  title: "Order Details | Admin | Fashion",
+  title: "Admin · Order Details",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminOrderDetailPage(props: PageProps<"/admin/orders/[id]">) {

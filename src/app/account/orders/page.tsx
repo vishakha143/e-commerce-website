@@ -5,7 +5,8 @@ import { OrderCard, type OrderCardData } from "@/components/account/OrderCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export const metadata: Metadata = {
-  title: "My Orders | Fashion",
+  title: "My Orders",
+  robots: { index: false, follow: false },
 };
 
 export default async function OrdersPage() {
