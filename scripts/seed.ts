@@ -8,6 +8,7 @@ config({ path: ".env.local" });
 
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { Category } from "../src/models/Category";
 import { Product } from "../src/models/Product";
 import { User } from "../src/models/User";
@@ -63,12 +64,21 @@ async function main() {
     console.log(`  ${doc.slug}: ${doc._id.toString()}`);
   }
 
-  const adminEmail = "admin@fashion.test";
+  const adminEmail = process.env.ADMIN_SEED_EMAIL ?? "admin@fashion.test";
   const existingAdmin = await User.findOne({ email: adminEmail });
   if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash("admin12345", 10);
+    // No hardcoded default: a fixed password here would end up guessable in
+    // every clone of this (public) repo, including on whatever database
+    // MONGODB_URI happens to point at. Require an explicit password via env,
+    // or fall back to a random one-time password printed only to this
+    // terminal.
+    const password = process.env.ADMIN_SEED_PASSWORD ?? randomBytes(12).toString("base64url");
+    const passwordHash = await bcrypt.hash(password, 10);
     await User.create({ name: "Admin", email: adminEmail, password: passwordHash, role: "admin" });
-    console.log(`\nSeeded admin user: ${adminEmail} / admin12345`);
+    console.log(`\nSeeded admin user: ${adminEmail} / ${password}`);
+    if (!process.env.ADMIN_SEED_PASSWORD) {
+      console.log("(random password — save it now, it is not stored anywhere else)");
+    }
   }
 
   await mongoose.disconnect();
