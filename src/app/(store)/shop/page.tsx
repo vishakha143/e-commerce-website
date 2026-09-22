@@ -14,7 +14,8 @@ import {
 import { parseProductListParams } from "@/lib/product-query";
 
 export const metadata: Metadata = {
-  title: "Shop | Fashion",
+  title: "Shop",
+  description: "Shop all products — everyday essentials, timeless style.",
 };
 
 export default async function ShopPage(props: PageProps<"/shop">) {

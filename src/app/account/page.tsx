@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "My Account | Fashion",
+  title: "My Account",
+  robots: { index: false, follow: false },
 };
 
 export default async function AccountPage() {

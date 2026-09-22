@@ -3,7 +3,8 @@ import { DataTable, type Column } from "@/components/admin/DataTable";
 import { getAllReviewsAdmin } from "@/services/reviewService";
 
 export const metadata: Metadata = {
-  title: "Reviews | Admin | Fashion",
+  title: "Admin · Reviews",
+  robots: { index: false, follow: false },
 };
 
 interface ReviewRow {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { X } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
+import { Drawer } from "@/components/ui/Drawer";
 
 const ACCOUNT_LINKS = [
   { label: "Account", href: "/account" },
@@ -21,16 +22,15 @@ export function MobileNav({
 }) {
   const { data: session } = useSession();
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 md:hidden">
-      <div
-        className="absolute inset-0 bg-foreground/45"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div className="absolute inset-y-0 left-0 w-[82%] max-w-xs bg-card flex flex-col gap-4 p-5 shadow-xl overflow-y-auto">
+    <Drawer
+      open={open}
+      onClose={onClose}
+      side="left"
+      widthClassName="w-[82%] max-w-xs"
+      ariaLabel="Menu"
+    >
+      <div className="flex flex-col gap-4 p-5 overflow-y-auto">
         <div className="flex items-center justify-between">
           <span className="text-lg font-extrabold tracking-wide">
             {BRAND_NAME.toUpperCase()}
@@ -92,6 +92,6 @@ export function MobileNav({
           </div>
         )}
       </div>
-    </div>
+    </Drawer>
   );
 }

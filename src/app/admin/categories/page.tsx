@@ -4,7 +4,8 @@ import { DeleteCategoryButton } from "@/components/admin/DeleteCategoryButton";
 import { getAllCategoriesFlat } from "@/services/categoryService";
 
 export const metadata: Metadata = {
-  title: "Categories | Admin | Fashion",
+  title: "Admin · Categories",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminCategoriesPage() {

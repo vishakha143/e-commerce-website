@@ -12,7 +12,7 @@ export function ProductGallery({ product }: { product: Product }) {
   const color = product.variants[0]?.color;
 
   return (
-    <div className="flex gap-3.5">
+    <div className="flex flex-col md:flex-row gap-3.5">
       <div className="flex md:flex-col gap-2.5 order-2 md:order-1">
         {VIEW_LABELS.map((label, index) => (
           <button

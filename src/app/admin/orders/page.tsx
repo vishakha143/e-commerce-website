@@ -4,7 +4,8 @@ import { DataTable, type Column } from "@/components/admin/DataTable";
 import { getAllOrders } from "@/services/orderService";
 
 export const metadata: Metadata = {
-  title: "Orders | Admin | Fashion",
+  title: "Admin · Orders",
+  robots: { index: false, follow: false },
 };
 
 interface OrderRow {

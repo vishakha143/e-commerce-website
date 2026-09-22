@@ -6,7 +6,8 @@ import { updateProductAction } from "@/actions/product";
 import { getProductByIdAdmin } from "@/services/productService";
 
 export const metadata: Metadata = {
-  title: "Edit Product | Admin | Fashion",
+  title: "Admin · Edit Product",
+  robots: { index: false, follow: false },
 };
 
 export default async function EditProductPage(props: PageProps<"/admin/products/[id]">) {

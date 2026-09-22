@@ -64,6 +64,11 @@ export async function getProductBySlug(slug: string) {
   return doc ? serializeProduct(doc) : null;
 }
 
+export async function getAllProductSlugs(): Promise<{ slug: string; updatedAt: Date }[]> {
+  await connectDB();
+  return Product.find().select("slug updatedAt").lean();
+}
+
 export async function getProductsByIds(ids: string[]) {
   if (ids.length === 0) return [];
   await connectDB();

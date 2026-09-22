@@ -3,7 +3,8 @@ import { DataTable, type Column } from "@/components/admin/DataTable";
 import { getAllUsers } from "@/services/userService";
 
 export const metadata: Metadata = {
-  title: "Customers | Admin | Fashion",
+  title: "Admin · Customers",
+  robots: { index: false, follow: false },
 };
 
 interface CustomerRow {

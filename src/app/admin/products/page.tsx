@@ -5,7 +5,8 @@ import { getAllProductsAdmin } from "@/services/productService";
 import type { Product } from "@/types/product";
 
 export const metadata: Metadata = {
-  title: "Products | Admin | Fashion",
+  title: "Admin · Products",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminProductsPage() {

@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { getProducts } from "@/services/productService";
 
 export const metadata: Metadata = {
-  title: "Search | Fashion",
+  title: "Search",
 };
 
 export default async function SearchPage(props: PageProps<"/search">) {
