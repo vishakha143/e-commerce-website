@@ -1,14 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Search, Heart, User, ShoppingBag, Menu } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
-import { MobileNav } from "@/components/layout/MobileNav";
-import { SearchOverlay } from "@/components/search/SearchOverlay";
-import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCartStore } from "@/store/cartStore";
+
+// These overlays are present on every page via the Navbar but only ever
+// matter once opened, and they (via Drawer/Modal) pull in the motion
+// library — deferring them keeps that out of the initial JS payload.
+const MobileNav = dynamic(() =>
+  import("@/components/layout/MobileNav").then((m) => m.MobileNav),
+);
+const SearchOverlay = dynamic(() =>
+  import("@/components/search/SearchOverlay").then((m) => m.SearchOverlay),
+);
+const CartDrawer = dynamic(() =>
+  import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),
+);
 
 export function Navbar() {
   const { data: session } = useSession();

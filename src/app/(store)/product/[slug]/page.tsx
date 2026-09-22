@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { cn } from "@/lib/utils";
+import { cn, safeJsonLd } from "@/lib/utils";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
@@ -73,7 +73,7 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
     <div className="px-4 md:px-8 py-6 max-w-[1600px] mx-auto w-full">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(structuredData) }}
       />
 
       <p className="text-xs text-muted-foreground mb-4">
