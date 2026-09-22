@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/mongodb";
 import { Product } from "@/models/Product";
+import { destroyCloudinaryImage } from "@/lib/cloudinary";
 import type { ProductListParams, ProductListResult } from "@/types/product";
 import type { ProductInput } from "@/lib/validations/product";
 
@@ -133,13 +134,30 @@ export async function createProduct(data: ProductInput) {
 
 export async function updateProduct(id: string, data: ProductInput) {
   await connectDB();
+
+  const before = await Product.findById(id).select("images").lean<{
+    images?: { publicId: string }[];
+  }>();
   const doc = await Product.findByIdAndUpdate(id, data, { new: true }).lean();
+
+  // Best-effort: an image the admin removed from this product is no longer
+  // referenced anywhere, so it shouldn't keep taking up free-tier storage.
+  // A failed cleanup here doesn't block the save — it just leaves an
+  // orphaned asset in Cloudinary, which is a storage-quota concern, not a
+  // correctness one.
+  const keptIds = new Set((data.images ?? []).map((img) => img.publicId));
+  const removed = (before?.images ?? []).filter((img) => !keptIds.has(img.publicId));
+  await Promise.all(removed.map((img) => destroyCloudinaryImage(img.publicId).catch(() => {})));
+
   return doc ? serializeProduct(doc) : null;
 }
 
 export async function deleteProduct(id: string) {
   await connectDB();
-  await Product.findByIdAndDelete(id);
+
+  const doc = await Product.findByIdAndDelete(id).lean<{ images?: { publicId: string }[] }>();
+  const images = doc?.images ?? [];
+  await Promise.all(images.map((img) => destroyCloudinaryImage(img.publicId).catch(() => {})));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

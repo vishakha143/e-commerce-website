@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { DataTable, type Column } from "@/components/admin/DataTable";
 import { getAllProductsAdmin } from "@/services/productService";
@@ -13,6 +14,19 @@ export default async function AdminProductsPage() {
   const products = await getAllProductsAdmin();
 
   const columns: Column<Product>[] = [
+    {
+      header: "",
+      render: (p) => {
+        const primary = p.images.find((img) => img.isPrimary) ?? p.images[0];
+        return (
+          <div className="relative w-10 h-12 rounded overflow-hidden bg-[repeating-linear-gradient(45deg,#EDEBE6,#EDEBE6_6px,#E3E0DA_6px,#E3E0DA_12px)]">
+            {primary && (
+              <Image src={primary.url} alt="" fill sizes="40px" className="object-cover" />
+            )}
+          </div>
+        );
+      },
+    },
     { header: "Name", render: (p) => p.name },
     { header: "Category", render: (p) => `${p.category}${p.subcategory ? ` / ${p.subcategory}` : ""}` },
     { header: "Price", render: (p) => `$${p.price.toFixed(2)}` },

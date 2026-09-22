@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import Image from "next/image";
 import { CATEGORY_TREE } from "@/lib/categories";
-import type { Product } from "@/types/product";
+import type { Product, ProductImage } from "@/types/product";
 import type { ProductFormState } from "@/actions/product";
 
 const inputClass =
@@ -13,6 +14,27 @@ interface VariantRow {
   size: string;
   sku: string;
   stock: number;
+}
+
+interface ImageSlot {
+  tempId: string;
+  url: string;
+  publicId: string;
+  alt: string;
+  status: "uploading" | "done" | "error";
+  errorMessage?: string;
+}
+
+function toImageSlots(images: ProductImage[] = []): ImageSlot[] {
+  return [...images]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((img) => ({
+      tempId: img.publicId,
+      url: img.url,
+      publicId: img.publicId,
+      alt: img.alt ?? "",
+      status: "done" as const,
+    }));
 }
 
 export function ProductForm({
@@ -37,6 +59,93 @@ export function ProductForm({
 
   const subcategories = CATEGORY_TREE.find((c) => c.slug === category)?.children ?? [];
 
+  const [images, setImages] = useState<ImageSlot[]>(() => toImageSlots(product?.images));
+  const initialPublicIds = useRef(new Set((product?.images ?? []).map((i) => i.publicId)));
+  const isUploading = images.some((img) => img.status === "uploading");
+
+  const imagesJson = JSON.stringify(
+    images
+      .filter((img) => img.status === "done")
+      .map((img, index) => ({
+        url: img.url,
+        publicId: img.publicId,
+        alt: img.alt,
+        sortOrder: index,
+        isPrimary: index === 0,
+      })),
+  );
+
+  async function uploadOne(file: File, tempId: string) {
+    const body = new FormData();
+    body.append("file", file);
+    try {
+      const res = await fetch("/api/media/upload", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      setImages((prev) =>
+        prev.map((img) =>
+          img.tempId === tempId
+            ? { ...img, status: "done", url: data.url, publicId: data.publicId }
+            : img,
+        ),
+      );
+    } catch (err) {
+      setImages((prev) =>
+        prev.map((img) =>
+          img.tempId === tempId
+            ? {
+                ...img,
+                status: "error",
+                errorMessage: err instanceof Error ? err.message : "Upload failed",
+              }
+            : img,
+        ),
+      );
+    }
+  }
+
+  function handleFiles(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    const slots: ImageSlot[] = files.map((file) => ({
+      tempId: `${file.name}-${Date.now()}-${Math.random()}`,
+      url: "",
+      publicId: "",
+      alt: "",
+      status: "uploading",
+    }));
+    setImages((prev) => [...prev, ...slots]);
+    files.forEach((file, i) => uploadOne(file, slots[i].tempId));
+  }
+
+  function removeImage(tempId: string) {
+    const target = images.find((img) => img.tempId === tempId);
+    setImages((prev) => prev.filter((img) => img.tempId !== tempId));
+
+    // Only an image uploaded during THIS editing session is safe to delete
+    // immediately — one the product already had stays referenced until
+    // Save, so abandoning the edit doesn't destroy it. The server diffs and
+    // cleans up removed pre-existing images when an update actually saves.
+    if (target?.publicId && target.status === "done" && !initialPublicIds.current.has(target.publicId)) {
+      fetch("/api/media/upload", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicId: target.publicId }),
+      }).catch(() => {});
+    }
+  }
+
+  function moveImage(tempId: string, direction: -1 | 1) {
+    setImages((prev) => {
+      const index = prev.findIndex((img) => img.tempId === tempId);
+      const swapWith = index + direction;
+      if (index === -1 || swapWith < 0 || swapWith >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[swapWith]] = [next[swapWith], next[index]];
+      return next;
+    });
+  }
+
   function updateVariant(index: number, patch: Partial<VariantRow>) {
     setVariants((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
@@ -52,6 +161,7 @@ export function ProductForm({
   return (
     <form action={formAction} className="flex flex-col gap-5 max-w-[640px]">
       <input type="hidden" name="variantsJson" value={JSON.stringify(variants)} />
+      <input type="hidden" name="imagesJson" value={imagesJson} />
 
       {state.error && (
         <p className="text-sm text-[#7A3E33] bg-[#FCEFEC] border border-[#EAD6D0] rounded-md px-3.5 py-2.5">
@@ -139,16 +249,92 @@ export function ProductForm({
         <input type="text" name="tags" defaultValue={product?.tags?.join(", ")} className={inputClass} />
       </label>
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-foreground">Image URLs (one per line)</span>
-        <textarea
-          name="images"
-          rows={3}
-          defaultValue={product?.images?.join("\n")}
-          placeholder="Leave blank to use the placeholder graphic"
-          className={inputClass}
-        />
-      </label>
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium text-foreground">Images</span>
+        <div className="flex flex-wrap gap-3">
+          {images.map((img, index) => (
+            <div
+              key={img.tempId}
+              className="relative w-24 h-28 rounded-md overflow-hidden border border-border bg-background"
+            >
+              {img.status === "uploading" && (
+                <div className="absolute inset-0 flex items-center justify-center text-center px-1 text-[10px] text-muted-foreground">
+                  Uploading…
+                </div>
+              )}
+              {img.status === "error" && (
+                <div className="absolute inset-0 flex items-center justify-center text-center px-1 text-[10px] text-[#7A3E33] bg-[#FCEFEC]">
+                  {img.errorMessage ?? "Failed"}
+                </div>
+              )}
+              {img.status === "done" && (
+                <Image
+                  src={img.url}
+                  alt={img.alt || "Product image"}
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                />
+              )}
+              {index === 0 && img.status === "done" && (
+                <span className="absolute top-1 left-1 bg-foreground text-background text-[9px] px-1.5 py-0.5 rounded">
+                  PRIMARY
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => removeImage(img.tempId)}
+                aria-label="Remove image"
+                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background/90 text-foreground text-xs cursor-pointer"
+              >
+                ✕
+              </button>
+              {img.status === "done" && images.length > 1 && (
+                <div className="absolute bottom-1 right-1 flex gap-0.5">
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => moveImage(img.tempId, -1)}
+                      aria-label="Move earlier"
+                      className="w-5 h-5 rounded bg-background/90 text-[10px] cursor-pointer"
+                    >
+                      ←
+                    </button>
+                  )}
+                  {index < images.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={() => moveImage(img.tempId, 1)}
+                      aria-label="Move later"
+                      className="w-5 h-5 rounded bg-background/90 text-[10px] cursor-pointer"
+                    >
+                      →
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          <label className="w-24 h-28 rounded-md border border-dashed border-border flex items-center justify-center text-center px-1 text-[11px] text-muted-foreground cursor-pointer">
+            + Add image
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                handleFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+        <span className="text-[11px] text-muted-foreground">
+          JPEG, PNG, or WebP, up to 5MB each. First image is the primary photo — use the arrows to
+          reorder.
+        </span>
+      </div>
 
       <div className="flex gap-5">
         <label className="flex items-center gap-2 text-sm text-foreground">
@@ -226,10 +412,10 @@ export function ProductForm({
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || isUploading}
         className="w-full py-3.5 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide cursor-pointer disabled:opacity-60"
       >
-        {pending ? "SAVING..." : product ? "SAVE CHANGES" : "CREATE PRODUCT"}
+        {pending ? "SAVING..." : isUploading ? "UPLOADING IMAGES…" : product ? "SAVE CHANGES" : "CREATE PRODUCT"}
       </button>
     </form>
   );

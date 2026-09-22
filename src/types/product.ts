@@ -5,6 +5,14 @@ export interface ProductVariant {
   stock: number;
 }
 
+export interface ProductImage {
+  url: string;
+  publicId: string;
+  alt?: string;
+  sortOrder: number;
+  isPrimary: boolean;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -15,7 +23,7 @@ export interface Product {
   brand?: string;
   price: number;
   compareAtPrice?: number;
-  images: string[];
+  images: ProductImage[];
   variants: ProductVariant[];
   rating: number;
   reviewCount: number;
