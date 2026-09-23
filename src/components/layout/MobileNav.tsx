@@ -65,30 +65,65 @@ export function MobileNav({
         <div className="h-px bg-border" />
 
         {session?.user ? (
-          <div className="flex flex-col gap-1 text-sm font-medium text-foreground/80">
-            {ACCOUNT_LINKS.map((link) => (
-              <Link key={link.label} href={link.href} onClick={onClose}>
-                {link.label}
-              </Link>
-            ))}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3 rounded-xl bg-background p-3">
+              <span
+                aria-hidden
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background"
+              >
+                {(session.user.name ?? session.user.email ?? "?").charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-foreground">
+                  Hi, {session.user.name?.split(" ")[0] ?? "there"}
+                </div>
+                <div className="truncate text-xs text-muted-foreground">{session.user.email}</div>
+              </div>
+            </div>
+            <div className="flex flex-col text-sm font-medium text-foreground/80">
+              {ACCOUNT_LINKS.map((link) => (
+                <Link key={link.label} href={link.href} onClick={onClose} className="py-2">
+                  {link.label}
+                </Link>
+              ))}
+              {session.user.role === "admin" && (
+                <Link href="/admin" onClick={onClose} className="py-2 text-foreground">
+                  Admin dashboard →
+                </Link>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => {
                 onClose();
                 signOutAndClearLocalState({ callbackUrl: "/" });
               }}
-              className="text-left cursor-pointer py-1"
+              className="rounded-md border border-border py-2.5 text-xs font-semibold tracking-wide cursor-pointer"
             >
-              Logout
+              LOG OUT
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-1 text-sm font-medium text-foreground/80">
-            <Link href="/login" onClick={onClose}>
-              Login
+          <div className="flex flex-col gap-3 rounded-xl bg-background p-4">
+            <div>
+              <div className="text-base font-bold text-foreground">Your style, your account</div>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Save favourites, check out faster and follow every order from bag to doorstep.
+              </p>
+            </div>
+            <Link
+              href="/login"
+              onClick={onClose}
+              className="rounded-md bg-foreground py-3 text-center text-xs font-semibold tracking-wide text-background"
+            >
+              SIGN IN
             </Link>
-            <Link href="/register" onClick={onClose}>
-              Create Account
+            <Link
+              href="/register"
+              onClick={onClose}
+              className="rounded-md border border-foreground py-3 text-center text-xs font-semibold tracking-wide text-foreground"
+            >
+              JOIN FASHION — IT&apos;S FREE
             </Link>
           </div>
         )}

@@ -74,7 +74,13 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             <div className="text-xs font-semibold tracking-wide text-muted-foreground mb-3.5">
               SUGGESTED PRODUCTS
             </div>
-            <div className="grid grid-cols-3 gap-5">
+            <div
+              className="grid grid-cols-3 gap-5"
+              onClick={(e) => {
+                // Close when a card link (image/name/select-options) is followed.
+                if ((e.target as HTMLElement).closest("a")) onClose();
+              }}
+            >
               {suggested.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
