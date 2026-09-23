@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { RevenueBarChart } from "@/components/admin/RevenueBarChart";
 import { BarList } from "@/components/admin/BarList";
@@ -8,11 +9,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function AdminAnalyticsPage() {
+const RANGES = [7, 30, 90] as const;
+
+export default async function AdminAnalyticsPage(props: PageProps<"/admin/analytics">) {
+  const sp = await props.searchParams;
+  const raw = Number(Array.isArray(sp.days) ? sp.days[0] : sp.days);
+  const days = (RANGES as readonly number[]).includes(raw) ? raw : 30;
+
   const [revenue, topProducts, salesByCategory] = await Promise.all([
-    getRevenueSeries(30),
-    getTopProducts(10),
-    getSalesByCategory(),
+    getRevenueSeries(days),
+    getTopProducts(10, days),
+    getSalesByCategory(days),
   ]);
 
   const totalRevenue = revenue.reduce((sum, d) => sum + d.revenue, 0);
@@ -20,11 +27,29 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
+        <nav aria-label="Date range" className="flex gap-1.5">
+          {RANGES.map((r) => (
+            <Link
+              key={r}
+              href={`/admin/analytics?days=${r}`}
+              aria-current={days === r ? "page" : undefined}
+              className={
+                days === r
+                  ? "px-3 py-1.5 rounded-md text-xs font-semibold bg-foreground text-background"
+                  : "px-3 py-1.5 rounded-md text-xs font-medium border border-border text-foreground"
+              }
+            >
+              Last {r} days
+            </Link>
+          ))}
+        </nav>
+      </div>
 
       <div className="flex flex-col gap-4 p-5 bg-card border border-border rounded-lg">
         <div className="flex items-baseline justify-between flex-wrap gap-2">
-          <h2 className="text-sm font-semibold text-foreground">Revenue — Last 30 Days</h2>
+          <h2 className="text-sm font-semibold text-foreground">Revenue — Last {days} Days</h2>
           <span className="text-xs text-muted-foreground">
             ${totalRevenue.toFixed(2)} · {totalOrders} orders
           </span>
