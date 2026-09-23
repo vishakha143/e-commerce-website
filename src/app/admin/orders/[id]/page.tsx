@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
+import { PaymentStatusSelect } from "@/components/admin/PaymentStatusSelect";
+import { OrderDetailsForm } from "@/components/admin/OrderDetailsForm";
 import { getOrderByIdAdmin } from "@/services/orderService";
-import type { OrderItem, OrderStatus } from "@/types/order";
+import type { OrderItem, OrderStatus, PaymentStatus } from "@/types/order";
 
 export const metadata: Metadata = {
   title: "Admin · Order Details",
@@ -89,10 +91,21 @@ export default async function AdminOrderDetailPage(props: PageProps<"/admin/orde
           <span>Total</span>
           <span>${order.total.toFixed(2)}</span>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Payment: Cash on Delivery · {order.paymentStatus}
-        </p>
+        <div className="flex items-center justify-between flex-wrap gap-3 mt-2">
+          <span className="text-xs text-muted-foreground">Payment: Cash on Delivery</span>
+          <PaymentStatusSelect
+            orderId={String(order._id)}
+            payment={order.paymentStatus as PaymentStatus}
+            orderStatus={order.status as OrderStatus}
+          />
+        </div>
       </div>
+
+      <OrderDetailsForm
+        orderId={String(order._id)}
+        trackingReference={order.trackingReference ?? ""}
+        adminNotes={order.adminNotes ?? ""}
+      />
     </div>
   );
 }

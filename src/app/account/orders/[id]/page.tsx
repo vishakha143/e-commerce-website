@@ -107,6 +107,9 @@ export default async function OrderDetailPage(props: PageProps<"/account/orders/
         <p className="text-xs text-muted-foreground mt-1">
           Payment: Cash on Delivery · {order.paymentStatus}
         </p>
+        {order.trackingReference && (
+          <p className="text-xs text-foreground mt-1">Tracking: {order.trackingReference}</p>
+        )}
       </div>
     </div>
   );
