@@ -41,7 +41,10 @@ export interface ProductListParams {
   minPrice?: number;
   maxPrice?: number;
   brand?: string;
-  sort?: "price_asc" | "price_desc" | "newest" | "featured";
+  isNew?: boolean;
+  sale?: boolean;
+  inStock?: boolean;
+  sort?: "price_asc" | "price_desc" | "newest" | "featured" | "rating";
   page?: number;
   limit?: number;
 }

@@ -33,8 +33,64 @@ export function ProductFilters({
     return qs ? `${basePath}?${qs}` : basePath;
   }
 
+  const otherParams = Object.entries(searchParams).filter(
+    ([key, value]) => value !== undefined && key !== "minPrice" && key !== "maxPrice" && key !== "page",
+  );
+
   return (
     <div className="flex flex-col gap-6">
+      <div>
+        <div className="text-sm font-semibold text-foreground mb-2.5">Price</div>
+        <form action={basePath} className="flex items-center gap-2">
+          {otherParams.map(([key, value]) => (
+            <input key={key} type="hidden" name={key} value={value} />
+          ))}
+          <input
+            type="number"
+            name="minPrice"
+            min="0"
+            defaultValue={searchParams.minPrice}
+            placeholder="Min"
+            aria-label="Minimum price"
+            className="w-full min-w-0 px-2 py-1.5 border border-border rounded-md text-xs"
+          />
+          <span className="text-muted-foreground text-xs">–</span>
+          <input
+            type="number"
+            name="maxPrice"
+            min="0"
+            defaultValue={searchParams.maxPrice}
+            placeholder="Max"
+            aria-label="Maximum price"
+            className="w-full min-w-0 px-2 py-1.5 border border-border rounded-md text-xs"
+          />
+          <button
+            type="submit"
+            className="shrink-0 px-2.5 py-1.5 border border-border rounded-md text-xs font-medium text-foreground cursor-pointer"
+          >
+            Go
+          </button>
+        </form>
+      </div>
+
+      <Link
+        href={hrefWith("inStock", "true")}
+        className="flex items-center gap-2 text-sm text-foreground"
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            "w-4 h-4 rounded border flex items-center justify-center shrink-0 text-[10px]",
+            searchParams.inStock === "true"
+              ? "bg-foreground border-foreground text-background"
+              : "border-border",
+          )}
+        >
+          {searchParams.inStock === "true" && "✓"}
+        </span>
+        In stock only
+      </Link>
+
       {facets.sizes.length > 0 && (
         <div>
           <div className="text-sm font-semibold text-foreground mb-2.5">Size</div>

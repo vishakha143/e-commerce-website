@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
-import { cn, safeJsonLd } from "@/lib/utils";
+import { cn, safeJsonLd, buildBreadcrumbJsonLd } from "@/lib/utils";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
@@ -69,16 +70,43 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
         : undefined,
   };
 
+  const breadcrumbItems = [
+    { name: "Home", url: SITE_URL },
+    ...(category ? [{ name: category.name, url: `${SITE_URL}/category/${category.slug}` }] : []),
+    ...(subcategory
+      ? [{ name: subcategory.name, url: `${SITE_URL}/category/${product.category}/${subcategory.slug}` }]
+      : []),
+    { name: product.name, url: `${SITE_URL}/product/${product.slug}` },
+  ];
+
   return (
     <div className="px-4 md:px-8 py-6 max-w-[1600px] mx-auto w-full">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(structuredData) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(buildBreadcrumbJsonLd(breadcrumbItems)) }}
+      />
 
       <p className="text-xs text-muted-foreground mb-4">
-        Home{category ? ` / ${category.name}` : ""}
-        {subcategory ? ` / ${subcategory.name}` : ""} / {product.name}
+        <Link href="/">Home</Link>
+        {category && (
+          <>
+            {" / "}
+            <Link href={`/category/${category.slug}`}>{category.name}</Link>
+          </>
+        )}
+        {subcategory && (
+          <>
+            {" / "}
+            <Link href={`/category/${product.category}/${subcategory.slug}`}>
+              {subcategory.name}
+            </Link>
+          </>
+        )}
+        {` / ${product.name}`}
       </p>
 
       <div className="flex flex-col md:flex-row gap-11">

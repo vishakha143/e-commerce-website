@@ -26,6 +26,9 @@ export async function getProducts(
       ...(params.maxPrice !== undefined && { $lte: params.maxPrice }),
     };
   }
+  if (params.isNew) filter.isNew = true;
+  if (params.sale) filter.compareAtPrice = { $gt: 0 };
+  if (params.inStock) filter["variants.stock"] = { $gt: 0 };
   if (params.search) {
     filter.$text = { $search: params.search };
   }
@@ -35,6 +38,7 @@ export async function getProducts(
     price_desc: { price: -1 },
     newest: { createdAt: -1 },
     featured: { featured: -1, createdAt: -1 },
+    rating: { rating: -1, reviewCount: -1 },
   };
   const sort = sortMap[params.sort ?? "featured"];
 

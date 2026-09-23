@@ -12,15 +12,31 @@ import {
   getAvailableBrands,
 } from "@/services/productService";
 import { parseProductListParams } from "@/lib/product-query";
+import { SITE_URL } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "Shop",
-  description: "Shop all products — everyday essentials, timeless style.",
-};
+export async function generateMetadata(props: PageProps<"/shop">): Promise<Metadata> {
+  const sp = await props.searchParams;
+  const isNew = sp.isNew === "true";
+  const sale = sp.sale === "true";
+  const title = isNew ? "New Arrivals" : sale ? "Sale" : "Shop";
+  const description = isNew
+    ? "The newest arrivals — everyday essentials, timeless style."
+    : sale
+      ? "Shop sale — discounted essentials, timeless style."
+      : "Shop all products — everyday essentials, timeless style.";
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    alternates: { canonical: `${SITE_URL}/shop` },
+  };
+}
 
 export default async function ShopPage(props: PageProps<"/shop">) {
   const sp = await props.searchParams;
   const params = parseProductListParams(sp);
+  const heading = params.isNew ? "New Arrivals" : params.sale ? "Sale" : "All Products";
 
   const [result, sizes, colors, brands] = await Promise.all([
     getProducts(params),
@@ -34,7 +50,7 @@ export default async function ShopPage(props: PageProps<"/shop">) {
   return (
     <div className="px-4 md:px-8 py-8 max-w-[1600px] mx-auto w-full">
       <div className="flex flex-col gap-1 mb-6">
-        <h1 className="text-2xl md:text-[26px] font-bold text-foreground">All Products</h1>
+        <h1 className="text-2xl md:text-[26px] font-bold text-foreground">{heading}</h1>
         <p className="text-sm text-muted-foreground">Everyday essentials. Timeless style.</p>
       </div>
 
