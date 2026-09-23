@@ -8,6 +8,7 @@ import { signOutAndClearLocalState } from "@/lib/clientAuth";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
   { label: "Products", href: "/admin/products" },
+  { label: "Inventory", href: "/admin/inventory" },
   { label: "Orders", href: "/admin/orders" },
   { label: "Customers", href: "/admin/customers" },
   { label: "Categories", href: "/admin/categories" },

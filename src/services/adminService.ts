@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Order";
 import { Product } from "@/models/Product";
 import { User } from "@/models/User";
+import { getInventorySummary } from "@/services/inventoryService";
 
 // Cancelled orders never produced revenue (their stock is restored), so they
 // stay out of every money figure below.
@@ -125,4 +126,13 @@ export async function getSalesByCategory(): Promise<CategorySales[]> {
   ]);
 
   return rows.map((r) => ({ category: r._id as string, revenue: r.revenue }));
+}
+
+export async function getAttentionCounts() {
+  await connectDB();
+  const [pendingOrders, inventory] = await Promise.all([
+    Order.countDocuments({ status: "pending" }),
+    getInventorySummary(),
+  ]);
+  return { pendingOrders, lowStock: inventory.low, outOfStock: inventory.out };
 }

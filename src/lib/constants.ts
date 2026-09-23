@@ -21,3 +21,7 @@ export const FOOTER_LINKS = {
   HELP: ["Shipping", "Returns", "FAQ", "Contact"],
   COMPANY: ["About", "Careers", "Press"],
 } as const;
+
+// A variant with 1..LOW_STOCK_THRESHOLD units left counts as "low stock";
+// 0 is "out of stock". One place so the admin UI and dashboard agree.
+export const LOW_STOCK_THRESHOLD = 3;
