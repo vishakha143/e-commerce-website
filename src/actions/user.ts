@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 import { loginSchema, registerSchema } from "@/lib/validations/auth";
 import { createUser, getUserByEmail } from "@/services/userService";
 import { signIn } from "@/lib/auth";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+
+const RATE_LIMIT_MESSAGE = "Too many attempts. Please try again in a few minutes.";
 
 export interface AuthActionState {
   error?: string;
@@ -15,6 +18,12 @@ export async function loginAction(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const ip = await getClientIp();
+  const rateLimit = await checkRateLimit(`login:${ip}`, 5, 5 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return { error: RATE_LIMIT_MESSAGE };
+  }
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -44,6 +53,12 @@ export async function registerAction(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const ip = await getClientIp();
+  const rateLimit = await checkRateLimit(`register:${ip}`, 5, 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return { error: RATE_LIMIT_MESSAGE };
+  }
+
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

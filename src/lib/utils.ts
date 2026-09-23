@@ -10,6 +10,17 @@ export function safeJsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
+/**
+ * Escapes regex metacharacters so a value can be dropped into a `new
+ * RegExp()` pattern as a literal string. Without this, a filter value
+ * built from user input (e.g. ?brand=...) lets an attacker inject
+ * arbitrary regex — at minimum a ReDoS vector via a pattern like
+ * `(a+)+$`, and in general undefined matching behavior.
+ */
+export function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export function buildBreadcrumbJsonLd(items: { name: string; url: string }[]) {
   return {
     "@context": "https://schema.org",

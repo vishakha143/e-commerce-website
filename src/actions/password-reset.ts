@@ -2,6 +2,7 @@
 
 import { forgotPasswordSchema, resetPasswordSchema } from "@/lib/validations/auth";
 import { requestPasswordReset, resetPassword } from "@/services/passwordResetService";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export interface ForgotPasswordState {
   submitted?: boolean;
@@ -12,6 +13,12 @@ export async function requestPasswordResetAction(
   _prevState: ForgotPasswordState,
   formData: FormData,
 ): Promise<ForgotPasswordState> {
+  const ip = await getClientIp();
+  const rateLimit = await checkRateLimit(`password-reset-request:${ip}`, 3, 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return { error: "Too many requests. Please try again in a few minutes." };
+  }
+
   const parsed = forgotPasswordSchema.safeParse({ email: String(formData.get("email") ?? "") });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Enter a valid email address." };
@@ -36,6 +43,12 @@ export async function resetPasswordAction(
   _prevState: ResetPasswordState,
   formData: FormData,
 ): Promise<ResetPasswordState> {
+  const ip = await getClientIp();
+  const rateLimit = await checkRateLimit(`password-reset-submit:${ip}`, 10, 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return { error: "Too many attempts. Please try again in a few minutes." };
+  }
+
   const token = String(formData.get("token") ?? "");
   if (!token) {
     return { error: "This reset link is invalid. Please request a new one." };
