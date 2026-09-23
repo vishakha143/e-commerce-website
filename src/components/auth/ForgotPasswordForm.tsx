@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
+import { requestPasswordResetAction, type ForgotPasswordState } from "@/actions/password-reset";
+
+const initialState: ForgotPasswordState = {};
 
 export function ForgotPasswordForm() {
-  const [submitted, setSubmitted] = useState(false);
+  const [state, formAction, pending] = useActionState(requestPasswordResetAction, initialState);
 
-  if (submitted) {
+  if (state.submitted) {
     return (
       <div className="flex flex-col gap-3">
         <h1 className="text-2xl font-bold text-foreground">Check your email</h1>
         <p className="text-sm text-muted-foreground">
-          Password reset emails aren&apos;t set up yet for this project. Once email
-          delivery is configured, a reset link will be sent to your address here.
+          If an account exists for that email, we&apos;ve sent a link to reset your
+          password. It expires in 1 hour.
         </p>
         <Link href="/login" className="text-sm text-foreground underline">
           Back to login
@@ -22,19 +25,19 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        setSubmitted(true);
-      }}
-      className="flex flex-col gap-[18px]"
-    >
+    <form action={formAction} className="flex flex-col gap-[18px]">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Reset your password</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Enter your email and we&apos;ll send you a reset link.
         </p>
       </div>
+
+      {state.error && (
+        <p className="text-sm text-[#7A3E33] bg-[#FCEFEC] border border-[#EAD6D0] rounded-md px-3.5 py-2.5">
+          {state.error}
+        </p>
+      )}
 
       <label className="flex flex-col gap-1.5">
         <span className="text-xs font-medium text-foreground">Email</span>
@@ -48,9 +51,10 @@ export function ForgotPasswordForm() {
 
       <button
         type="submit"
-        className="w-full py-3.5 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide cursor-pointer"
+        disabled={pending}
+        className="w-full py-3.5 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide cursor-pointer disabled:opacity-60"
       >
-        SEND RESET LINK
+        {pending ? "SENDING..." : "SEND RESET LINK"}
       </button>
 
       <Link href="/login" className="text-center text-sm text-foreground underline">
