@@ -13,12 +13,17 @@ export interface CheckoutState {
 
 export async function placeOrderAction(
   items: CartItem[],
+  idempotencyKey: string,
   _prevState: CheckoutState,
   formData: FormData,
 ): Promise<CheckoutState> {
   const session = await auth();
   if (!session?.user?.id) {
     return { error: "Please log in to place an order." };
+  }
+
+  if (!idempotencyKey) {
+    return { error: "Could not place order. Please refresh and try again." };
   }
 
   const shippingAddress: ShippingAddress = {
@@ -34,7 +39,7 @@ export async function placeOrderAction(
     return { error: "Please fill in all address fields." };
   }
 
-  const result = await createOrder(session.user.id, items, shippingAddress);
+  const result = await createOrder(session.user.id, items, shippingAddress, idempotencyKey);
   if (!result.success) {
     return { error: result.error ?? "Could not place order. Please try again." };
   }

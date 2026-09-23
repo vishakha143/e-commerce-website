@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCartStore } from "@/store/cartStore";
@@ -16,7 +16,12 @@ export function CheckoutForm() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clear);
-  const boundAction = placeOrderAction.bind(null, items);
+  // Generated once per mount and resubmitted on every retry (double-click,
+  // the form re-enabling after a transient error, a second tab open on the
+  // same checkout) so the server can recognize a retry and return the
+  // original order instead of creating a duplicate.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const boundAction = placeOrderAction.bind(null, items, idempotencyKey);
   const [state, formAction, pending] = useActionState(boundAction, initialState);
 
   useEffect(() => {

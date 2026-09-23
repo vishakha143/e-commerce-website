@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Order";
 import { Product } from "@/models/Product";
@@ -11,18 +12,40 @@ export interface CreateOrderResult {
   orderId?: string;
 }
 
+/** Expected, user-facing validation failures (out of stock, etc.) — distinct
+ * from unexpected errors, which should propagate rather than be swallowed. */
+class OrderValidationError extends Error {}
+
+function isDuplicateKeyError(err: unknown): boolean {
+  return typeof err === "object" && err !== null && (err as { code?: number }).code === 11000;
+}
+
 /**
  * Validates every line against the DB (product exists, variant exists,
  * stock covers the quantity) and recomputes price/shipping/total
  * server-side — the client's cart is never trusted for money figures.
- * Not wrapped in a transaction: acceptable for this project's scope,
- * but a partial failure could leave inventory adjusted without an
- * order (or vice versa) under concurrent load.
+ *
+ * Runs as a MongoDB transaction (Atlas free-tier clusters are replica
+ * sets, so this is supported) so order creation and every stock
+ * decrement commit or roll back together — a failure partway through
+ * (e.g. item 3 of 4 is out of stock) can't leave items 1-2 decremented
+ * with no order to show for it. Each decrement is also its own atomic
+ * conditional update (`stock >= quantity` in the filter, matched against
+ * the specific variant via $elemMatch), so two concurrent checkouts for
+ * the same last unit can't both succeed even if their transactions
+ * overlap — one's update simply matches zero documents and the whole
+ * transaction aborts.
+ *
+ * `idempotencyKey` is a value the client generates once per checkout
+ * attempt and resubmits on every retry (double-click, network retry, a
+ * second tab), so a retry returns the order that already exists instead
+ * of creating a duplicate.
  */
 export async function createOrder(
   userId: string,
   items: CartItem[],
   shippingAddress: ShippingAddress,
+  idempotencyKey: string,
 ): Promise<CreateOrderResult> {
   await connectDB();
 
@@ -30,70 +53,99 @@ export async function createOrder(
     return { success: false, error: "Your bag is empty." };
   }
 
-  const orderItems = [];
-  let subtotal = 0;
+  const existing = await Order.findOne({ idempotencyKey }).lean<{ _id: mongoose.Types.ObjectId }>();
+  if (existing) {
+    return { success: true, orderId: existing._id.toString() };
+  }
 
-  for (const item of items) {
-    const product = await Product.findById(item.productId);
-    if (!product) {
-      return { success: false, error: `${item.name} is no longer available.` };
-    }
+  const session = await mongoose.startSession();
+  try {
+    let orderId = "";
 
-    const variant = product.variants.find(
-      (v: { sku: string }) => v.sku === item.sku,
-    );
-    if (!variant) {
-      return { success: false, error: `${product.name} is no longer available in that option.` };
-    }
-    if (variant.stock < item.quantity) {
-      return {
-        success: false,
-        error:
-          variant.stock === 0
-            ? `${product.name} is out of stock.`
-            : `Only ${variant.stock} left of ${product.name}.`,
-      };
-    }
+    await session.withTransaction(async () => {
+      const orderItems = [];
+      let subtotal = 0;
 
-    // Server-authoritative price — never trust the price on the client's cart item.
-    const price = product.price;
-    subtotal += price * item.quantity;
+      for (const item of items) {
+        const product = await Product.findById(item.productId).session(session);
+        if (!product) {
+          throw new OrderValidationError(`${item.name} is no longer available.`);
+        }
 
-    orderItems.push({
-      product: product._id,
-      name: product.name,
-      sku: variant.sku,
-      size: variant.size,
-      color: variant.color,
-      quantity: item.quantity,
-      price,
+        const variant = product.variants.find((v: { sku: string }) => v.sku === item.sku);
+        if (!variant) {
+          throw new OrderValidationError(`${product.name} is no longer available in that option.`);
+        }
+
+        const decremented = await Product.updateOne(
+          {
+            _id: item.productId,
+            variants: { $elemMatch: { sku: item.sku, stock: { $gte: item.quantity } } },
+          },
+          { $inc: { "variants.$.stock": -item.quantity } },
+        ).session(session);
+
+        if (decremented.modifiedCount === 0) {
+          throw new OrderValidationError(
+            variant.stock === 0
+              ? `${product.name} is out of stock.`
+              : `Only ${variant.stock} left of ${product.name}.`,
+          );
+        }
+
+        // Server-authoritative price — never trust the price on the client's cart item.
+        const price = product.price;
+        subtotal += price * item.quantity;
+
+        orderItems.push({
+          product: product._id,
+          name: product.name,
+          sku: variant.sku,
+          size: variant.size,
+          color: variant.color,
+          quantity: item.quantity,
+          price,
+        });
+      }
+
+      const shippingCost = calculateShipping(subtotal);
+      const total = subtotal + shippingCost;
+
+      const [order] = await Order.create(
+        [
+          {
+            user: userId,
+            items: orderItems,
+            shippingAddress,
+            subtotal,
+            shippingCost,
+            discount: 0,
+            total,
+            status: "pending",
+            paymentStatus: "pending",
+            paymentMethod: "cod",
+            idempotencyKey,
+          },
+        ],
+        { session },
+      );
+
+      orderId = order._id.toString();
     });
+
+    return { success: true, orderId };
+  } catch (err) {
+    if (err instanceof OrderValidationError) {
+      return { success: false, error: err.message };
+    }
+    if (isDuplicateKeyError(err)) {
+      const raced = await Order.findOne({ idempotencyKey }).lean<{ _id: mongoose.Types.ObjectId }>();
+      if (raced) return { success: true, orderId: raced._id.toString() };
+    }
+    throw err;
+  } finally {
+    await session.endSession();
   }
-
-  const shippingCost = calculateShipping(subtotal);
-  const total = subtotal + shippingCost;
-
-  const order = await Order.create({
-    user: userId,
-    items: orderItems,
-    shippingAddress,
-    subtotal,
-    shippingCost,
-    discount: 0,
-    total,
-    status: "pending",
-    paymentStatus: "pending",
-    paymentMethod: "cod",
-  });
-
-  for (const item of items) {
-    await Product.updateOne(
-      { _id: item.productId, "variants.sku": item.sku },
-      { $inc: { "variants.$.stock": -item.quantity } },
-    );
-  }
-
-  return { success: true, orderId: order._id.toString() };
 }
 
 export async function getOrdersByUserId(userId: string) {

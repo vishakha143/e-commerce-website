@@ -45,6 +45,12 @@ const OrderSchema = new Schema(
       default: "pending",
     },
     paymentMethod: { type: String, enum: ["cod"], default: "cod" },
+    // Client-generated per-checkout-attempt key. A unique+sparse index lets
+    // a retried submission (double-click, network retry, a second tab) find
+    // and return the order that already exists instead of creating a
+    // duplicate; sparse so existing orders from before this field existed
+    // don't collide on a shared `null` value.
+    idempotencyKey: { type: String },
   },
   { timestamps: true },
 );
@@ -52,5 +58,6 @@ const OrderSchema = new Schema(
 OrderSchema.index({ user: 1 });
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
 
 export const Order = models.Order || model("Order", OrderSchema);
