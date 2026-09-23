@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Order";
 import { Product } from "@/models/Product";
 import { calculateShipping } from "@/lib/pricing";
+import { canTransition } from "@/lib/orderStatus";
 import type { CartItem } from "@/types/cart";
 import type { OrderStatus, ShippingAddress } from "@/types/order";
 
@@ -168,7 +169,73 @@ export async function getOrderByIdAdmin(orderId: string) {
   return Order.findById(orderId).populate("user", "name email").lean();
 }
 
-export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+export interface UpdateStatusResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Validates the transition against the fulfilment rules, and applies it
+ * with the current status in the filter so two admins clicking at once
+ * can't both act on the same starting state. Cancelling also puts the
+ * order's units back into stock in the same transaction — otherwise a
+ * cancelled order would keep inventory locked up forever — and marks a
+ * paid order refunded.
+ */
+export async function updateOrderStatus(
+  orderId: string,
+  next: OrderStatus,
+): Promise<UpdateStatusResult> {
   await connectDB();
-  return Order.findByIdAndUpdate(orderId, { status }, { new: true }).lean();
+
+  const order = await Order.findById(orderId).lean<{
+    status: OrderStatus;
+    paymentStatus: string;
+    items: { product: mongoose.Types.ObjectId; sku: string; quantity: number }[];
+  }>();
+  if (!order) return { success: false, error: "Order not found." };
+
+  if (!canTransition(order.status, next)) {
+    return {
+      success: false,
+      error: `An order that is ${order.status} can't be changed to ${next}.`,
+    };
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    let applied = false;
+
+    await session.withTransaction(async () => {
+      const update: Record<string, unknown> = { status: next };
+      if (next === "cancelled" && order.paymentStatus === "paid") {
+        update.paymentStatus = "refunded";
+      }
+
+      const result = await Order.updateOne(
+        { _id: orderId, status: order.status },
+        { $set: update },
+        { session },
+      );
+      applied = result.modifiedCount === 1;
+      if (!applied) return;
+
+      if (next === "cancelled") {
+        for (const item of order.items) {
+          await Product.updateOne(
+            { _id: item.product, "variants.sku": item.sku },
+            { $inc: { "variants.$.stock": item.quantity } },
+            { session },
+          );
+        }
+      }
+    });
+
+    if (!applied) {
+      return { success: false, error: "This order was just updated by someone else. Refresh and try again." };
+    }
+    return { success: true };
+  } finally {
+    await session.endSession();
+  }
 }

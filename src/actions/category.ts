@@ -1,18 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/authz";
 import { createCategory, deleteCategory } from "@/services/categoryService";
 
 export interface CategoryFormState {
   error?: string;
-}
-
-async function requireAdmin() {
-  const session = await auth();
-  if (session?.user?.role !== "admin") {
-    throw new Error("Forbidden");
-  }
 }
 
 export async function createCategoryAction(
@@ -36,6 +29,7 @@ export async function createCategoryAction(
 
 export async function deleteCategoryAction(id: string) {
   await requireAdmin();
-  await deleteCategory(id);
-  revalidatePath("/admin/categories");
+  const result = await deleteCategory(id);
+  if (result.success) revalidatePath("/admin/categories");
+  return result;
 }
