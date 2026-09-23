@@ -45,6 +45,7 @@ export interface ProductListParams {
   isNew?: boolean;
   sale?: boolean;
   inStock?: boolean;
+  minRating?: number;
   sort?: "price_asc" | "price_desc" | "newest" | "featured" | "rating";
   page?: number;
   limit?: number;

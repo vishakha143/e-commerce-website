@@ -39,6 +39,7 @@ export async function getProducts(
   if (params.isNew) filter.isNew = true;
   if (params.sale) filter.compareAtPrice = { $gt: 0 };
   if (params.inStock) filter["variants.stock"] = { $gt: 0 };
+  if (params.minRating) filter.rating = { $gte: params.minRating };
   if (params.search && params.search.length <= MAX_FILTER_VALUE_LENGTH) {
     filter.$text = { $search: params.search };
   }
