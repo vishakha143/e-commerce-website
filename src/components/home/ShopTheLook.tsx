@@ -1,13 +1,25 @@
+import Image from "next/image";
 import Link from "next/link";
+import { HOME_IMAGES } from "@/lib/homeImages";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 
 export function ShopTheLook() {
   return (
     <section className="relative h-[300px] flex items-center">
-      <PlaceholderImage
-        label="Editorial photo — head-to-toe outfit, concrete backdrop"
-        className="absolute inset-0"
-      />
+      {HOME_IMAGES.shopTheLook ? (
+        <Image
+          src={HOME_IMAGES.shopTheLook}
+          alt="Head-to-toe outfit"
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+      ) : (
+        <PlaceholderImage
+          label="Editorial photo — head-to-toe outfit, concrete backdrop"
+          className="absolute inset-0"
+        />
+      )}
       <div className="relative z-10 ml-auto px-6 md:px-14 text-right flex flex-col gap-3.5 items-end max-w-md">
         <h2 className="text-2xl md:text-[28px] font-bold leading-tight text-foreground">
           Good Outfits.

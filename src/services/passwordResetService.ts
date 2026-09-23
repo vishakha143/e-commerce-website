@@ -23,6 +23,10 @@ export async function requestPasswordReset(email: string): Promise<void> {
   await connectDB();
   const user = await User.findOne({ email: email.toLowerCase() });
   if (!user) return;
+  // Admin credentials are never reset by email: if the mailbox were ever
+  // compromised, this would hand over the store. Silently a no-op (same
+  // response as an unknown address); admins use `npm run rotate-admin`.
+  if (user.role === "admin") return;
 
   const rawToken = randomBytes(32).toString("base64url");
   await PasswordResetToken.create({
@@ -53,6 +57,15 @@ export async function resetPassword(
 
   const resetToken = await PasswordResetToken.findOne({ tokenHash: hashToken(rawToken) });
   if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+    return {
+      success: false,
+      error: "This reset link is invalid or has expired. Please request a new one.",
+    };
+  }
+
+  // Belt and braces: even a token that somehow exists for an admin can't be used.
+  const target = await User.findById(resetToken.user).select("role").lean<{ role: string }>();
+  if (!target || target.role === "admin") {
     return {
       success: false,
       error: "This reset link is invalid or has expired. Please request a new one.",

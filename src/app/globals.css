@@ -137,3 +137,20 @@
     @apply font-sans;
   }
 }
+
+/* Admin console: a cooler slate/indigo palette so it never reads as the storefront. */
+.admin-theme {
+  --background: #EEF1F7;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --primary: #0F172A;
+  --primary-foreground: #F8FAFC;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #4F46E5;
+  --accent-foreground: #FFFFFF;
+  --border: #DDE3EE;
+  --input: #DDE3EE;
+  --ring: #4F46E5;
+}

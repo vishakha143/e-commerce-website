@@ -1,13 +1,26 @@
+import Image from "next/image";
 import Link from "next/link";
+import { HOME_IMAGES } from "@/lib/homeImages";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 
 export function Hero() {
   return (
     <section className="relative h-[420px] md:h-[540px] flex items-end">
-      <PlaceholderImage
-        label="Campaign photo — two models in oversized tee & denim, studio wall"
-        className="absolute inset-0"
-      />
+      {HOME_IMAGES.hero ? (
+        <Image
+          src={HOME_IMAGES.hero}
+          alt="New collection campaign"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      ) : (
+        <PlaceholderImage
+          label="Campaign photo — two models in oversized tee & denim, studio wall"
+          className="absolute inset-0"
+        />
+      )}
       <div className="relative z-10 flex flex-col gap-4 max-w-xl p-6 md:p-12">
         <p className="text-xs font-semibold tracking-[0.12em] text-foreground">
           NEW COLLECTION

@@ -1,11 +1,13 @@
+import Image from "next/image";
 import Link from "next/link";
+import { HOME_IMAGES } from "@/lib/homeImages";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 
 const CATEGORIES = [
-  { name: "Men", href: "/category/men" },
-  { name: "Women", href: "/category/women" },
-  { name: "Footwear", href: "/category/footwear" },
-  { name: "Accessories", href: "/category/accessories" },
+  { name: "Men", href: "/category/men", key: "men" },
+  { name: "Women", href: "/category/women", key: "women" },
+  { name: "Footwear", href: "/category/footwear", key: "footwear" },
+  { name: "Accessories", href: "/category/accessories", key: "accessories" },
 ] as const;
 
 export function CategoryShowcase() {
@@ -21,10 +23,20 @@ export function CategoryShowcase() {
             href={cat.href}
             className="group relative aspect-[3/4] rounded-lg overflow-hidden"
           >
-            <PlaceholderImage
-              label={`category photo — ${cat.name}`}
-              className="absolute inset-0 transition-transform duration-300 group-hover:scale-[1.015]"
-            />
+            {HOME_IMAGES[cat.key] ? (
+              <Image
+                src={HOME_IMAGES[cat.key] as string}
+                alt={`Shop ${cat.name}`}
+                fill
+                sizes="(min-width: 768px) 25vw, 50vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              />
+            ) : (
+              <PlaceholderImage
+                label={`category photo — ${cat.name}`}
+                className="absolute inset-0 transition-transform duration-300 group-hover:scale-[1.015]"
+              />
+            )}
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-[linear-gradient(to_top,rgba(0,0,0,0.35),transparent)]">
               <span className="text-white font-bold text-base">{cat.name}</span>
             </div>
