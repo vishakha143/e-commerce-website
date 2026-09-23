@@ -1,15 +1,23 @@
 import { auth } from "@/lib/auth";
 import { destroyCloudinaryImage, uploadImageToCloudinary } from "@/lib/cloudinary";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES, sniffImageType } from "@/lib/validations/upload";
+import { checkRateLimit } from "@/lib/rateLimit";
 
-async function requireAdmin() {
+async function requireAdminSession() {
   const session = await auth();
-  return session?.user?.role === "admin";
+  if (session?.user?.role !== "admin") return null;
+  return session;
 }
 
 export async function POST(request: Request) {
-  if (!(await requireAdmin())) {
+  const session = await requireAdminSession();
+  if (!session?.user?.id) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const rateLimit = await checkRateLimit(`upload:${session.user.id}`, 30, 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return Response.json({ error: "Too many uploads. Please try again later." }, { status: 429 });
   }
 
   const formData = await request.formData();
@@ -43,7 +51,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  if (!(await requireAdmin())) {
+  const session = await requireAdminSession();
+  if (!session) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { createOrder, updateOrderStatus } from "@/services/orderService";
+import { checkRateLimit } from "@/lib/rateLimit";
 import type { CartItem } from "@/types/cart";
 import type { OrderStatus, ShippingAddress } from "@/types/order";
 
@@ -20,6 +21,11 @@ export async function placeOrderAction(
   const session = await auth();
   if (!session?.user?.id) {
     return { error: "Please log in to place an order." };
+  }
+
+  const rateLimit = await checkRateLimit(`order:${session.user.id}`, 10, 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return { error: "Too many orders placed recently. Please try again in a little while." };
   }
 
   if (!idempotencyKey) {

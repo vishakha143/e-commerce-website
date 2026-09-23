@@ -1,8 +1,11 @@
 import { connectDB } from "@/lib/mongodb";
 import { Product } from "@/models/Product";
 import { destroyCloudinaryImage } from "@/lib/cloudinary";
+import { escapeRegex } from "@/lib/utils";
 import type { ProductListParams, ProductListResult } from "@/types/product";
 import type { ProductInput } from "@/lib/validations/product";
+
+const MAX_FILTER_VALUE_LENGTH = 100;
 
 /**
  * Product listing with search/filter/sort/pagination — the storefront's
@@ -17,9 +20,13 @@ export async function getProducts(
 
   if (params.category) filter.category = params.category;
   if (params.subcategory) filter.subcategory = params.subcategory;
-  if (params.brand) filter.brand = new RegExp(`^${params.brand}$`, "i");
+  if (params.brand && params.brand.length <= MAX_FILTER_VALUE_LENGTH) {
+    filter.brand = new RegExp(`^${escapeRegex(params.brand)}$`, "i");
+  }
   if (params.size) filter["variants.size"] = params.size;
-  if (params.color) filter["variants.color"] = new RegExp(`^${params.color}$`, "i");
+  if (params.color && params.color.length <= MAX_FILTER_VALUE_LENGTH) {
+    filter["variants.color"] = new RegExp(`^${escapeRegex(params.color)}$`, "i");
+  }
   if (params.minPrice !== undefined || params.maxPrice !== undefined) {
     filter.price = {
       ...(params.minPrice !== undefined && { $gte: params.minPrice }),
@@ -29,7 +36,7 @@ export async function getProducts(
   if (params.isNew) filter.isNew = true;
   if (params.sale) filter.compareAtPrice = { $gt: 0 };
   if (params.inStock) filter["variants.stock"] = { $gt: 0 };
-  if (params.search) {
+  if (params.search && params.search.length <= MAX_FILTER_VALUE_LENGTH) {
     filter.$text = { $search: params.search };
   }
 
