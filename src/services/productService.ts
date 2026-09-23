@@ -7,6 +7,9 @@ import type { ProductInput } from "@/lib/validations/product";
 
 const MAX_FILTER_VALUE_LENGTH = 100;
 
+/** Storefront visibility. `$ne: false` so products created before the flag existed stay visible. */
+const PUBLISHED = { published: { $ne: false } };
+
 /**
  * Product listing with search/filter/sort/pagination — the storefront's
  * single source of product data (shop, category, search, homepage).
@@ -16,7 +19,7 @@ export async function getProducts(
 ): Promise<ProductListResult> {
   await connectDB();
 
-  const filter: Record<string, unknown> = {};
+  const filter: Record<string, unknown> = { ...PUBLISHED };
 
   if (params.category) filter.category = params.category;
   if (params.subcategory) filter.subcategory = params.subcategory;
@@ -72,25 +75,25 @@ export async function getProducts(
 
 export async function getProductBySlug(slug: string) {
   await connectDB();
-  const doc = await Product.findOne({ slug }).lean();
+  const doc = await Product.findOne({ slug, ...PUBLISHED }).lean();
   return doc ? serializeProduct(doc) : null;
 }
 
 export async function getAllProductSlugs(): Promise<{ slug: string; updatedAt: Date }[]> {
   await connectDB();
-  return Product.find().select("slug updatedAt").lean();
+  return Product.find(PUBLISHED).select("slug updatedAt").lean();
 }
 
 export async function getProductsByIds(ids: string[]) {
   if (ids.length === 0) return [];
   await connectDB();
-  const docs = await Product.find({ _id: { $in: ids } }).lean();
+  const docs = await Product.find({ _id: { $in: ids }, ...PUBLISHED }).lean();
   return docs.map(serializeProduct);
 }
 
 export async function getRelatedProducts(product: { id: string; category: string }, limit = 4) {
   await connectDB();
-  const docs = await Product.find({ category: product.category, _id: { $ne: product.id } })
+  const docs = await Product.find({ category: product.category, _id: { $ne: product.id }, ...PUBLISHED })
     .limit(limit)
     .lean();
   return docs.map(serializeProduct);
@@ -98,7 +101,7 @@ export async function getRelatedProducts(product: { id: string; category: string
 
 export async function getNewArrivals(limit = 4) {
   await connectDB();
-  const docs = await Product.find({ isNew: true }).sort({ createdAt: -1 }).limit(limit).lean();
+  const docs = await Product.find({ isNew: true, ...PUBLISHED }).sort({ createdAt: -1 }).limit(limit).lean();
   return docs.map(serializeProduct);
 }
 
@@ -109,26 +112,72 @@ export interface ProductFacetScope {
 
 export async function getAvailableSizes(scope: ProductFacetScope = {}): Promise<string[]> {
   await connectDB();
-  const sizes = await Product.distinct("variants.size", scope);
+  const sizes = await Product.distinct("variants.size", { ...PUBLISHED, ...scope });
   return (sizes as unknown as string[]).filter(Boolean).sort();
 }
 
 export async function getAvailableColors(scope: ProductFacetScope = {}): Promise<string[]> {
   await connectDB();
-  const colors = await Product.distinct("variants.color", scope);
+  const colors = await Product.distinct("variants.color", { ...PUBLISHED, ...scope });
   return (colors as unknown as string[]).filter(Boolean).sort();
 }
 
 export async function getAvailableBrands(scope: ProductFacetScope = {}): Promise<string[]> {
   await connectDB();
-  const brands = await Product.distinct("brand", scope);
+  const brands = await Product.distinct("brand", { ...PUBLISHED, ...scope });
   return (brands as unknown as string[]).filter(Boolean).sort();
 }
 
-export async function getAllProductsAdmin() {
+export type AdminVisibility = "all" | "published" | "unpublished";
+
+export interface AdminProductQuery {
+  q?: string;
+  category?: string;
+  visibility?: AdminVisibility;
+  page?: number;
+  limit?: number;
+}
+
+/** Admin catalog list: includes unpublished products, with search/filter/pagination. */
+export async function listProductsAdmin(query: AdminProductQuery = {}) {
   await connectDB();
-  const docs = await Product.find().sort({ createdAt: -1 }).lean();
-  return docs.map(serializeProduct);
+
+  const filter: Record<string, unknown> = {};
+  if (query.category && /^[a-z0-9-]{1,50}$/.test(query.category)) filter.category = query.category;
+  if (query.visibility === "published") filter.published = { $ne: false };
+  if (query.visibility === "unpublished") filter.published = false;
+
+  const q = query.q?.trim();
+  if (q && q.length <= MAX_FILTER_VALUE_LENGTH) {
+    const pattern = new RegExp(escapeRegex(q), "i");
+    filter.$or = [{ name: pattern }, { slug: pattern }, { brand: pattern }, { "variants.sku": pattern }];
+  }
+
+  const limit = query.limit && query.limit > 0 ? query.limit : 15;
+  const page = query.page && query.page > 0 ? Math.floor(query.page) : 1;
+
+  const [docs, total] = await Promise.all([
+    Product.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    Product.countDocuments(filter),
+  ]);
+
+  return {
+    products: docs.map(serializeProduct),
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
+}
+
+export async function setProductPublished(id: string, published: boolean) {
+  await connectDB();
+  const result = await Product.updateOne({ _id: id }, { $set: { published } });
+  return result.matchedCount === 1;
 }
 
 export async function getProductByIdAdmin(id: string) {

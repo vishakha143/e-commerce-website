@@ -71,7 +71,7 @@ export async function createOrder(
 
       for (const item of items) {
         const product = await Product.findById(item.productId).session(session);
-        if (!product) {
+        if (!product || product.published === false) {
           throw new OrderValidationError(`${item.name} is no longer available.`);
         }
 
