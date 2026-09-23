@@ -10,7 +10,7 @@ export async function NewArrivals() {
     <section className="px-4 md:px-8 py-10 max-w-[1600px] mx-auto w-full">
       <div className="flex items-baseline justify-between mb-5">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">New Arrivals</h2>
-        <Link href="/shop?filter=new" className="text-xs font-semibold text-foreground">
+        <Link href="/shop?isNew=true" className="text-xs font-semibold text-foreground">
           View All →
         </Link>
       </div>

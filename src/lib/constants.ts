@@ -7,11 +7,13 @@ export const ANNOUNCEMENT_TEXT =
   "FREE SHIPPING OVER $150 · EASY 30-DAY RETURNS · SECURE CHECKOUT";
 
 export const NAV_ITEMS = [
+  { label: "Shop", href: "/shop" },
   { label: "Men", href: "/category/men" },
   { label: "Women", href: "/category/women" },
   { label: "Footwear", href: "/category/footwear" },
   { label: "Accessories", href: "/category/accessories" },
-  { label: "New Arrivals", href: "/shop?filter=new" },
+  { label: "New Arrivals", href: "/shop?isNew=true" },
+  { label: "Sale", href: "/shop?sale=true" },
 ] as const;
 
 export const FOOTER_LINKS = {

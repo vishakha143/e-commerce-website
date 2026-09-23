@@ -16,6 +16,8 @@ import {
 } from "@/services/productService";
 import { findCategory, findSubcategory } from "@/lib/categories";
 import { parseProductListParams } from "@/lib/product-query";
+import { buildBreadcrumbJsonLd, safeJsonLd } from "@/lib/utils";
+import { SITE_URL } from "@/lib/constants";
 
 export async function generateMetadata(
   props: PageProps<"/category/[...slug]">,
@@ -73,11 +75,24 @@ export default async function CategoryPage(props: PageProps<"/category/[...slug]
   const facets = { sizes, colors, brands };
   const searchParamsForLinks = sp as Record<string, string>;
 
+  const breadcrumbItems = [
+    { name: "Home", url: SITE_URL },
+    { name: category.name, url: `${SITE_URL}/category/${categorySlug}` },
+    ...(subcategory
+      ? [{ name: subcategory.name, url: `${SITE_URL}/category/${categorySlug}/${subcategorySlug}` }]
+      : []),
+  ];
+
   return (
     <div className="px-4 md:px-8 py-8 max-w-[1600px] mx-auto w-full">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(buildBreadcrumbJsonLd(breadcrumbItems)) }}
+      />
+
       <p className="text-xs text-muted-foreground mb-2">
-        Home / {category.name}
-        {subcategory ? ` / ${subcategory.name}` : ""}
+        <Link href="/">Home</Link> / <Link href={`/category/${categorySlug}`}>{category.name}</Link>
+        {subcategory ? <> / {subcategory.name}</> : ""}
       </p>
       <div className="flex flex-col gap-1 mb-6">
         <h1 className="text-2xl md:text-[26px] font-bold text-foreground">
