@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { signOutAndClearLocalState } from "@/lib/clientAuth";
 
 const NAV_ITEMS = [
   { label: "Profile", href: "/account" },
@@ -48,7 +49,7 @@ export function AccountSidebar() {
       <div className="hidden md:block h-px bg-border my-2.5" />
       <button
         type="button"
-        onClick={() => signOut({ callbackUrl: "/" })}
+        onClick={() => signOutAndClearLocalState({ callbackUrl: "/" })}
         className="px-2.5 py-2.5 text-sm font-medium text-muted-foreground text-left cursor-pointer whitespace-nowrap"
       >
         Logout
