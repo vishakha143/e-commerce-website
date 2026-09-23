@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 import { WishlistButton } from "@/components/product/WishlistButton";
@@ -6,14 +7,25 @@ import type { Product } from "@/types/product";
 export function ProductCard({ product }: { product: Product }) {
   const badge = product.compareAtPrice ? "SALE" : product.isNew ? "NEW" : null;
   const color = product.variants[0]?.color;
+  const primaryImage = product.images.find((img) => img.isPrimary) ?? product.images[0];
 
   return (
     <div className="flex flex-col gap-2.5 w-full">
       <div className="relative aspect-[3/4] w-full rounded-md overflow-hidden">
-        <PlaceholderImage
-          label={`${product.name}${color ? `, ${color}` : ""}`}
-          className="absolute inset-0"
-        />
+        {primaryImage ? (
+          <Image
+            src={primaryImage.url}
+            alt={primaryImage.alt || `${product.name}${color ? `, ${color}` : ""}`}
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            className="object-cover"
+          />
+        ) : (
+          <PlaceholderImage
+            label={`${product.name}${color ? `, ${color}` : ""}`}
+            className="absolute inset-0"
+          />
+        )}
 
         {badge && (
           <span

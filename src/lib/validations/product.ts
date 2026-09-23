@@ -7,6 +7,14 @@ export const variantSchema = z.object({
   stock: z.number().int().min(0, "Stock can't be negative"),
 });
 
+export const productImageSchema = z.object({
+  url: z.string().url(),
+  publicId: z.string().min(1),
+  alt: z.string().optional(),
+  sortOrder: z.number().int(),
+  isPrimary: z.boolean(),
+});
+
 export const productSchema = z.object({
   name: z.string().min(2, "Name is required"),
   slug: z
@@ -22,7 +30,7 @@ export const productSchema = z.object({
   featured: z.boolean(),
   isNew: z.boolean(),
   tags: z.array(z.string()),
-  images: z.array(z.string()),
+  images: z.array(productImageSchema),
   variants: z.array(variantSchema),
 });
 

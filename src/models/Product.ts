@@ -10,6 +10,17 @@ const VariantSchema = new Schema(
   { _id: false },
 );
 
+const ProductImageSchema = new Schema(
+  {
+    url: { type: String, required: true },
+    publicId: { type: String, required: true },
+    alt: { type: String, default: "" },
+    sortOrder: { type: Number, default: 0 },
+    isPrimary: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
 const ProductSchema = new Schema(
   {
     name: { type: String, required: true },
@@ -20,7 +31,7 @@ const ProductSchema = new Schema(
     brand: String,
     price: { type: Number, required: true },
     compareAtPrice: Number,
-    images: { type: [String], default: [] },
+    images: { type: [ProductImageSchema], default: [] },
     variants: { type: [VariantSchema], default: [] },
     rating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },

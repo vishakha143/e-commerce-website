@@ -33,7 +33,13 @@ function parseProductForm(formData: FormData) {
 
   const compareAtPriceRaw = String(formData.get("compareAtPrice") ?? "").trim();
   const tagsRaw = String(formData.get("tags") ?? "").trim();
-  const imagesRaw = String(formData.get("images") ?? "").trim();
+
+  let images: unknown = [];
+  try {
+    images = JSON.parse(String(formData.get("imagesJson") ?? "[]"));
+  } catch {
+    images = [];
+  }
 
   return {
     name: String(formData.get("name") ?? "").trim(),
@@ -49,9 +55,7 @@ function parseProductForm(formData: FormData) {
     tags: tagsRaw
       ? tagsRaw.split(",").map((t) => t.trim()).filter(Boolean)
       : [],
-    images: imagesRaw
-      ? imagesRaw.split("\n").map((t) => t.trim()).filter(Boolean)
-      : [],
+    images,
     variants,
   };
 }
