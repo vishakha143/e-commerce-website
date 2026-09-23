@@ -3,6 +3,10 @@ import { Order } from "@/models/Order";
 import { Product } from "@/models/Product";
 import { User } from "@/models/User";
 
+// Cancelled orders never produced revenue (their stock is restored), so they
+// stay out of every money figure below.
+const COUNTS_AS_SALE = { status: { $ne: "cancelled" } };
+
 export interface DashboardStats {
   totalRevenue: number;
   totalOrders: number;
@@ -14,7 +18,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   await connectDB();
 
   const [revenueAgg, totalOrders, totalCustomers, totalProducts] = await Promise.all([
-    Order.aggregate([{ $group: { _id: null, total: { $sum: "$total" } } }]),
+    Order.aggregate([{ $match: COUNTS_AS_SALE }, { $group: { _id: null, total: { $sum: "$total" } } }]),
     Order.countDocuments(),
     User.countDocuments({ role: "customer" }),
     Product.countDocuments(),
@@ -42,7 +46,7 @@ export async function getRevenueSeries(days: number): Promise<DailyRevenue[]> {
   since.setHours(0, 0, 0, 0);
 
   const rows = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: since }, ...COUNTS_AS_SALE } },
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -74,6 +78,7 @@ export async function getTopProducts(limit = 5): Promise<TopProduct[]> {
   await connectDB();
 
   const rows = await Order.aggregate([
+    { $match: COUNTS_AS_SALE },
     { $unwind: "$items" },
     {
       $group: {
@@ -99,6 +104,7 @@ export async function getSalesByCategory(): Promise<CategorySales[]> {
   await connectDB();
 
   const rows = await Order.aggregate([
+    { $match: COUNTS_AS_SALE },
     { $unwind: "$items" },
     {
       $lookup: {

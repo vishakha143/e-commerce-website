@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/authz";
 import { createOrder, updateOrderStatus } from "@/services/orderService";
 import { checkRateLimit } from "@/lib/rateLimit";
 import type { CartItem } from "@/types/cart";
@@ -53,13 +54,15 @@ export async function placeOrderAction(
   return { orderId: result.orderId };
 }
 
-export async function updateOrderStatusAction(orderId: string, status: OrderStatus) {
-  const session = await auth();
-  if (session?.user?.role !== "admin") {
-    throw new Error("Forbidden");
-  }
+export async function updateOrderStatusAction(
+  orderId: string,
+  status: OrderStatus,
+): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin();
 
-  await updateOrderStatus(orderId, status);
+  const result = await updateOrderStatus(orderId, status);
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/admin");
+  return result;
 }

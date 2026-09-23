@@ -1,16 +1,10 @@
-import { auth } from "@/lib/auth";
+import { getAdminSession } from "@/lib/authz";
 import { destroyCloudinaryImage, uploadImageToCloudinary } from "@/lib/cloudinary";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES, sniffImageType } from "@/lib/validations/upload";
 import { checkRateLimit } from "@/lib/rateLimit";
 
-async function requireAdminSession() {
-  const session = await auth();
-  if (session?.user?.role !== "admin") return null;
-  return session;
-}
-
 export async function POST(request: Request) {
-  const session = await requireAdminSession();
+  const session = await getAdminSession();
   if (!session?.user?.id) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -51,7 +45,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const session = await requireAdminSession();
+  const session = await getAdminSession();
   if (!session) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }

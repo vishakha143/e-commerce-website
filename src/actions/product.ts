@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/authz";
 import { productSchema } from "@/lib/validations/product";
 import {
   createProduct,
@@ -14,13 +14,6 @@ import {
 
 export interface ProductFormState {
   error?: string;
-}
-
-async function requireAdmin() {
-  const session = await auth();
-  if (session?.user?.role !== "admin") {
-    throw new Error("Forbidden");
-  }
 }
 
 function parseProductForm(formData: FormData) {
