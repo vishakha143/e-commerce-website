@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { signOutAndClearLocalState } from "@/lib/clientAuth";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
@@ -45,7 +45,7 @@ export function AdminSidebar() {
       </Link>
       <button
         type="button"
-        onClick={() => signOut({ callbackUrl: "/" })}
+        onClick={() => signOutAndClearLocalState({ callbackUrl: "/" })}
         className="px-2.5 py-2.5 text-sm font-medium text-muted-foreground text-left cursor-pointer whitespace-nowrap"
       >
         Logout

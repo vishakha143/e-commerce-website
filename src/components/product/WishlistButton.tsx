@@ -1,8 +1,10 @@
 "use client";
 
 import { Heart } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useWishlistStore } from "@/store/wishlistStore";
+import { toggleWishlistAction } from "@/actions/wishlist";
 
 export function WishlistButton({
   productId,
@@ -13,16 +15,27 @@ export function WishlistButton({
   size?: "sm" | "lg";
   className?: string;
 }) {
+  const { status } = useSession();
   const wishlisted = useWishlistStore((s) => s.has(productId));
   const toggle = useWishlistStore((s) => s.toggle);
   const dimension = size === "lg" ? "w-12 h-12" : "w-8 h-8";
   const iconSize = size === "lg" ? 18 : 15;
 
+  function handleClick() {
+    toggle(productId);
+    // Optimistic local toggle first for instant feedback; best-effort DB
+    // sync alongside it so an authenticated user's wishlist stays correct
+    // if they pick this product up again on another device.
+    if (status === "authenticated") {
+      toggleWishlistAction(productId).catch(() => {});
+    }
+  }
+
   return (
     <button
       type="button"
       aria-label="Toggle wishlist"
-      onClick={() => toggle(productId)}
+      onClick={handleClick}
       className={cn(
         dimension,
         "rounded-full bg-card border border-border flex items-center justify-center cursor-pointer shrink-0",

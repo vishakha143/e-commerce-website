@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
 import { Drawer } from "@/components/ui/Drawer";
+import { signOutAndClearLocalState } from "@/lib/clientAuth";
 
 const ACCOUNT_LINKS = [
   { label: "Account", href: "/account" },
@@ -74,7 +75,7 @@ export function MobileNav({
               type="button"
               onClick={() => {
                 onClose();
-                signOut({ callbackUrl: "/" });
+                signOutAndClearLocalState({ callbackUrl: "/" });
               }}
               className="text-left cursor-pointer py-1"
             >
