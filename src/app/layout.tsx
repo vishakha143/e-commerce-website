@@ -4,6 +4,7 @@ import "./globals.css";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { ChromeGate } from "@/components/layout/ChromeGate";
 import { Providers } from "@/components/providers/Providers";
 import { BRAND_NAME, SITE_URL } from "@/lib/constants";
 
@@ -51,12 +52,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <Providers>
-          <AnnouncementBar />
-          <Navbar />
-          <main id="main-content" className="flex-1 flex flex-col">
+          <ChromeGate
+            top={
+              <>
+                <AnnouncementBar />
+                <Navbar />
+              </>
+            }
+            bottom={<Footer />}
+          >
             {children}
-          </main>
-          <Footer />
+          </ChromeGate>
         </Providers>
       </body>
     </html>

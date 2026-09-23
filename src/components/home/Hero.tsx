@@ -1,40 +1,29 @@
+import Image from "next/image";
 import Link from "next/link";
-import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 
+/**
+ * The campaign artwork carries its own headline and "Shop now" button, so the
+ * whole banner is one link. On phones the wide banner is cropped from the
+ * left, which keeps the headline and button in frame.
+ */
 export function Hero() {
   return (
-    <section className="relative h-[420px] md:h-[540px] flex items-end">
-      <PlaceholderImage
-        label="Campaign photo — two models in oversized tee & denim, studio wall"
-        className="absolute inset-0"
-      />
-      <div className="relative z-10 flex flex-col gap-4 max-w-xl p-6 md:p-12">
-        <p className="text-xs font-semibold tracking-[0.12em] text-foreground">
-          NEW COLLECTION
-        </p>
-        <h1 className="text-4xl md:text-5xl font-extrabold leading-[1.05] text-foreground">
-          EVERYDAY.
-          <br />
-          YOUR WAY.
-        </h1>
-        <p className="text-sm md:text-[15px] text-foreground/70">
-          Modern essentials for a better you.
-        </p>
-        <div className="flex gap-3 mt-2">
-          <Link
-            href="/category/men"
-            className="px-6 py-3.5 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide"
-          >
-            SHOP MEN
-          </Link>
-          <Link
-            href="/category/women"
-            className="px-6 py-3.5 bg-card text-foreground border border-foreground rounded-md text-xs font-semibold tracking-wide"
-          >
-            SHOP WOMEN
-          </Link>
-        </div>
-      </div>
+    <section className="px-3 md:px-4 pt-3 md:pt-4 max-w-[1600px] mx-auto w-full">
+      <h1 className="sr-only">Style Your Story — trendy looks for every you</h1>
+      <Link
+        href="/shop"
+        aria-label="Shop the new season collection"
+        className="relative block h-[220px] sm:h-[300px] md:h-auto md:aspect-[1525/422] overflow-hidden rounded-xl"
+      >
+        <Image
+          src="/home/hero.webp"
+          alt="Woman in a floral dress in the sun — Style Your Story, new season"
+          fill
+          priority
+          sizes="(min-width: 1600px) 1600px, 100vw"
+          className="object-cover object-left md:object-center"
+        />
+      </Link>
     </section>
   );
 }

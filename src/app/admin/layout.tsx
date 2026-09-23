@@ -9,9 +9,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (session.user.role !== "admin") redirect("/");
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 px-4 md:px-8 py-8 max-w-[1200px] mx-auto w-full flex-1">
-      <AdminSidebar />
-      <div className="flex-1 min-w-0">{children}</div>
+    <div className="admin-theme flex flex-col md:flex-row flex-1 min-h-screen bg-background text-foreground">
+      <AdminSidebar name={session.user.name ?? ""} email={session.user.email ?? ""} />
+      <div className="flex-1 min-w-0 px-4 md:px-10 py-8 max-w-[1280px]">{children}</div>
     </div>
   );
 }
