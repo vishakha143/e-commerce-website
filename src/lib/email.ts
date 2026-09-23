@@ -1,30 +1,31 @@
-const RESEND_API_URL = "https://api.resend.com/emails";
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 function getConfig() {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.EMAIL_FROM;
 
-  if (!apiKey) {
-    throw new Error("Email is not configured (missing RESEND_API_KEY)");
+  if (!apiKey || !senderEmail) {
+    throw new Error("Email is not configured (missing BREVO_API_KEY or EMAIL_FROM)");
   }
 
-  return { apiKey, from };
+  return { apiKey, senderEmail, senderName: process.env.EMAIL_FROM_NAME ?? "Fashion" };
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
-  const { apiKey, from } = getConfig();
+  const { apiKey, senderEmail, senderName } = getConfig();
 
-  const res = await fetch(RESEND_API_URL, {
+  const res = await fetch(BREVO_API_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      "api-key": apiKey,
       "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({
-      from,
-      to,
+      sender: { email: senderEmail, name: senderName },
+      to: [{ email: to }],
       subject: "Reset your password",
-      html: `
+      htmlContent: `
         <p>We received a request to reset your password.</p>
         <p><a href="${resetUrl}">Reset your password</a></p>
         <p>This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
