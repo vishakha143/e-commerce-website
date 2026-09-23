@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DataTable, type Column } from "@/components/admin/DataTable";
 import { getAllUsers } from "@/services/userService";
+import { getCustomerOrderStats } from "@/services/adminService";
 
 export const metadata: Metadata = {
   title: "Admin · Customers",
@@ -12,17 +13,21 @@ interface CustomerRow {
   name: string;
   email: string;
   role: string;
+  orders: number;
+  spent: number;
   createdAt: string | Date;
 }
 
 export default async function AdminCustomersPage() {
-  const docs = await getAllUsers();
+  const [docs, stats] = await Promise.all([getAllUsers(), getCustomerOrderStats()]);
 
   const rows: CustomerRow[] = docs.map((doc) => ({
     id: String(doc._id),
     name: doc.name,
     email: doc.email,
     role: doc.role,
+    orders: stats.get(String(doc._id))?.orders ?? 0,
+    spent: stats.get(String(doc._id))?.spent ?? 0,
     createdAt: doc.createdAt,
   }));
 
@@ -30,6 +35,8 @@ export default async function AdminCustomersPage() {
     { header: "Name", render: (c) => c.name },
     { header: "Email", render: (c) => c.email },
     { header: "Role", render: (c) => <span className="capitalize">{c.role}</span> },
+    { header: "Orders", render: (c) => c.orders },
+    { header: "Lifetime value", render: (c) => `$${c.spent.toFixed(2)}` },
     {
       header: "Joined",
       render: (c) =>

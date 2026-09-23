@@ -35,6 +35,9 @@ const ProductSchema = new Schema(
     variants: { type: [VariantSchema], default: [] },
     rating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
+    // Unpublished products are hidden from the storefront but stay in the admin.
+    // Legacy documents have no value and count as published (see PUBLISHED).
+    published: { type: Boolean, default: true },
     featured: { type: Boolean, default: false },
     isNew: { type: Boolean, default: false },
     tags: { type: [String], default: [] },
@@ -54,6 +57,7 @@ ProductSchema.index({ subcategory: 1 });
 ProductSchema.index({ tags: 1 });
 ProductSchema.index({ createdAt: -1 });
 ProductSchema.index({ featured: 1 });
+ProductSchema.index({ published: 1 });
 ProductSchema.index({ isNew: 1 });
 ProductSchema.index({ name: "text", brand: "text", tags: "text" });
 

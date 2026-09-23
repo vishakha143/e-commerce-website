@@ -8,6 +8,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  setProductPublished,
   getProducts,
   getProductsByIds,
 } from "@/services/productService";
@@ -94,6 +95,18 @@ export async function deleteProductAction(id: string) {
   await deleteProduct(id);
   revalidatePath("/admin/products");
   revalidatePath("/");
+}
+
+export async function setProductPublishedAction(id: string, published: boolean) {
+  await requireAdmin();
+  if (typeof published !== "boolean" || !/^[a-f\d]{24}$/i.test(id)) {
+    return { success: false, error: "Invalid request." };
+  }
+  const ok = await setProductPublished(id, published);
+  if (!ok) return { success: false, error: "Product not found." };
+  revalidatePath("/admin/products");
+  revalidatePath("/", "layout");
+  return { success: true };
 }
 
 /**

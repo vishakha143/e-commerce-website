@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Order";
 import { Product } from "@/models/Product";
 import { User } from "@/models/User";
+import { getInventorySummary } from "@/services/inventoryService";
 
 // Cancelled orders never produced revenue (their stock is restored), so they
 // stay out of every money figure below.
@@ -32,6 +33,18 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   };
 }
 
+/**
+ * Start (00:00 UTC) of the first day in a window of `days` days ending today.
+ * Everything here is UTC: Mongo's $dateToString buckets in UTC, so building
+ * the day keys from local time would shift late-evening orders onto the wrong day.
+ */
+function windowStart(days: number): Date {
+  const since = new Date();
+  since.setUTCDate(since.getUTCDate() - (days - 1));
+  since.setUTCHours(0, 0, 0, 0);
+  return since;
+}
+
 export interface DailyRevenue {
   date: string;
   revenue: number;
@@ -41,9 +54,7 @@ export interface DailyRevenue {
 export async function getRevenueSeries(days: number): Promise<DailyRevenue[]> {
   await connectDB();
 
-  const since = new Date();
-  since.setDate(since.getDate() - (days - 1));
-  since.setHours(0, 0, 0, 0);
+  const since = windowStart(days);
 
   const rows = await Order.aggregate([
     { $match: { createdAt: { $gte: since }, ...COUNTS_AS_SALE } },
@@ -60,7 +71,7 @@ export async function getRevenueSeries(days: number): Promise<DailyRevenue[]> {
   const series: DailyRevenue[] = [];
   for (let i = 0; i < days; i++) {
     const d = new Date(since);
-    d.setDate(d.getDate() + i);
+    d.setUTCDate(d.getUTCDate() + i);
     const key = d.toISOString().slice(0, 10);
     const entry = byDate.get(key);
     series.push({ date: key, revenue: entry?.revenue ?? 0, orders: entry?.orders ?? 0 });
@@ -74,11 +85,11 @@ export interface TopProduct {
   revenue: number;
 }
 
-export async function getTopProducts(limit = 5): Promise<TopProduct[]> {
+export async function getTopProducts(limit = 5, days?: number): Promise<TopProduct[]> {
   await connectDB();
 
   const rows = await Order.aggregate([
-    { $match: COUNTS_AS_SALE },
+    { $match: { ...COUNTS_AS_SALE, ...(days && { createdAt: { $gte: windowStart(days) } }) } },
     { $unwind: "$items" },
     {
       $group: {
@@ -100,11 +111,11 @@ export interface CategorySales {
   revenue: number;
 }
 
-export async function getSalesByCategory(): Promise<CategorySales[]> {
+export async function getSalesByCategory(days?: number): Promise<CategorySales[]> {
   await connectDB();
 
   const rows = await Order.aggregate([
-    { $match: COUNTS_AS_SALE },
+    { $match: { ...COUNTS_AS_SALE, ...(days && { createdAt: { $gte: windowStart(days) } }) } },
     { $unwind: "$items" },
     {
       $lookup: {
@@ -125,4 +136,28 @@ export async function getSalesByCategory(): Promise<CategorySales[]> {
   ]);
 
   return rows.map((r) => ({ category: r._id as string, revenue: r.revenue }));
+}
+
+export async function getAttentionCounts() {
+  await connectDB();
+  const [pendingOrders, inventory] = await Promise.all([
+    Order.countDocuments({ status: "pending" }),
+    getInventorySummary(),
+  ]);
+  return { pendingOrders, lowStock: inventory.low, outOfStock: inventory.out };
+}
+
+export interface CustomerOrderStats {
+  orders: number;
+  spent: number;
+}
+
+/** Per-customer order count and lifetime spend (cancelled orders excluded from both). */
+export async function getCustomerOrderStats(): Promise<Map<string, CustomerOrderStats>> {
+  await connectDB();
+  const rows = await Order.aggregate([
+    { $match: COUNTS_AS_SALE },
+    { $group: { _id: "$user", orders: { $sum: 1 }, spent: { $sum: "$total" } } },
+  ]);
+  return new Map(rows.map((r) => [String(r._id), { orders: r.orders, spent: r.spent }]));
 }

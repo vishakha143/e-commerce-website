@@ -27,6 +27,7 @@ export interface Product {
   variants: ProductVariant[];
   rating: number;
   reviewCount: number;
+  published?: boolean;
   featured?: boolean;
   isNew?: boolean;
   tags?: string[];

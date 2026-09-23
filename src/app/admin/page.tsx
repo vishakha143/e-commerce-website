@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { RevenueBarChart } from "@/components/admin/RevenueBarChart";
@@ -7,6 +8,7 @@ import {
   getRevenueSeries,
   getTopProducts,
   getSalesByCategory,
+  getAttentionCounts,
 } from "@/services/adminService";
 
 export const metadata: Metadata = {
@@ -15,11 +17,12 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminDashboardPage() {
-  const [stats, revenue, topProducts, salesByCategory] = await Promise.all([
+  const [stats, revenue, topProducts, salesByCategory, attention] = await Promise.all([
     getDashboardStats(),
     getRevenueSeries(7),
     getTopProducts(5),
     getSalesByCategory(),
+    getAttentionCounts(),
   ]);
 
   return (
@@ -31,6 +34,40 @@ export default async function AdminDashboardPage() {
         <StatsCard label="Total Orders" value={stats.totalOrders.toString()} />
         <StatsCard label="Total Customers" value={stats.totalCustomers.toString()} />
         <StatsCard label="Total Products" value={stats.totalProducts.toString()} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          {
+            label: "Orders to process",
+            value: attention.pendingOrders,
+            href: "/admin/orders?status=pending",
+            hot: attention.pendingOrders > 0,
+          },
+          {
+            label: "Low-stock variants",
+            value: attention.lowStock,
+            href: "/admin/inventory?filter=low",
+            hot: attention.lowStock > 0,
+          },
+          {
+            label: "Out-of-stock variants",
+            value: attention.outOfStock,
+            href: "/admin/inventory?filter=out",
+            hot: attention.outOfStock > 0,
+          },
+        ].map((a) => (
+          <Link
+            key={a.label}
+            href={a.href}
+            className={`flex items-center justify-between p-4 rounded-lg border ${
+              a.hot ? "bg-[#FBF3DC] border-[#EBDDB0]" : "bg-card border-border"
+            }`}
+          >
+            <span className="text-sm font-medium text-foreground">{a.label}</span>
+            <span className="text-lg font-bold text-foreground">{a.value}</span>
+          </Link>
+        ))}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
