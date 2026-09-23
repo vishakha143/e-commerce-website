@@ -6,6 +6,8 @@ import { calculateShipping } from "@/lib/pricing";
 import { canTransition, allowedNextPaymentStatuses } from "@/lib/orderStatus";
 import { escapeRegex } from "@/lib/utils";
 import { User } from "@/models/User";
+import { Coupon } from "@/models/Coupon";
+import { evaluateCoupon } from "@/services/couponService";
 import type { CartItem } from "@/types/cart";
 import type { OrderStatus, PaymentStatus, ShippingAddress } from "@/types/order";
 
@@ -49,6 +51,7 @@ export async function createOrder(
   items: CartItem[],
   shippingAddress: ShippingAddress,
   idempotencyKey: string,
+  couponCode?: string,
 ): Promise<CreateOrderResult> {
   await connectDB();
 
@@ -111,8 +114,34 @@ export async function createOrder(
         });
       }
 
+      // Discount is recomputed here from the DB, and the redemption is claimed
+      // atomically (usage cap checked in the update filter) inside the same
+      // transaction, so two checkouts can't both take the last use.
+      let discount = 0;
+      let appliedCode: string | undefined;
+      if (couponCode) {
+        const evaluation = await evaluateCoupon(couponCode, subtotal, userId);
+        if (!evaluation.ok) throw new OrderValidationError(evaluation.error);
+
+        const claimed = await Coupon.updateOne(
+          {
+            _id: evaluation.coupon._id,
+            active: true,
+            $or: [{ maxUses: null }, { $expr: { $lt: ["$usedCount", "$maxUses"] } }],
+          },
+          { $inc: { usedCount: 1 } },
+        ).session(session);
+        if (claimed.modifiedCount === 0) {
+          throw new OrderValidationError("That code has reached its usage limit.");
+        }
+        discount = evaluation.discount;
+        appliedCode = evaluation.coupon.code;
+      }
+
+      // Shipping is judged on the pre-discount subtotal so the free-shipping
+      // threshold shown in the bag means the same thing at checkout.
       const shippingCost = calculateShipping(subtotal);
-      const total = subtotal + shippingCost;
+      const total = Math.round((subtotal - discount + shippingCost) * 100) / 100;
 
       const [order] = await Order.create(
         [
@@ -122,7 +151,8 @@ export async function createOrder(
             shippingAddress,
             subtotal,
             shippingCost,
-            discount: 0,
+            discount,
+            couponCode: appliedCode,
             total,
             status: "pending",
             paymentStatus: "pending",
@@ -298,6 +328,7 @@ export async function updateOrderStatus(
   const order = await Order.findById(orderId).lean<{
     status: OrderStatus;
     paymentStatus: string;
+    couponCode?: string;
     items: { product: mongoose.Types.ObjectId; sku: string; quantity: number }[];
   }>();
   if (!order) return { success: false, error: "Order not found." };
@@ -332,6 +363,14 @@ export async function updateOrderStatus(
           await Product.updateOne(
             { _id: item.product, "variants.sku": item.sku },
             { $inc: { "variants.$.stock": item.quantity } },
+            { session },
+          );
+        }
+        // A cancelled order frees its coupon redemption again.
+        if (order.couponCode) {
+          await Coupon.updateOne(
+            { code: order.couponCode, usedCount: { $gt: 0 } },
+            { $inc: { usedCount: -1 } },
             { session },
           );
         }

@@ -8,6 +8,7 @@ import { placeOrderAction, type CheckoutState } from "@/actions/order";
 import { AddressForm } from "@/components/checkout/AddressForm";
 import { PaymentMethod } from "@/components/checkout/PaymentMethod";
 import { CheckoutSummary } from "@/components/checkout/CheckoutSummary";
+import type { AppliedCoupon } from "@/components/checkout/CouponField";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 const initialState: CheckoutState = {};
@@ -20,6 +21,12 @@ export function CheckoutForm() {
   // the form re-enabling after a transient error, a second tab open on the
   // same checkout) so the server can recognize a retry and return the
   // original order instead of creating a duplicate.
+  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  // A discount was computed for a specific bag, so remember which subtotal it
+  // was for and ignore it once the bag changes.
+  const [appliedCoupon, setAppliedCoupon] = useState<(AppliedCoupon & { subtotal: number }) | null>(null);
+  const coupon = appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
+  const setCoupon = (c: AppliedCoupon | null) => setAppliedCoupon(c ? { ...c, subtotal } : null);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const boundAction = placeOrderAction.bind(null, items, idempotencyKey);
   const [state, formAction, pending] = useActionState(boundAction, initialState);
@@ -57,6 +64,7 @@ export function CheckoutForm() {
           </p>
         )}
 
+        <input type="hidden" name="couponCode" value={coupon?.code ?? ""} />
         <AddressForm />
         <PaymentMethod />
 
@@ -69,7 +77,7 @@ export function CheckoutForm() {
         </button>
       </div>
 
-      <CheckoutSummary />
+      <CheckoutSummary coupon={coupon} onCouponChange={setCoupon} />
     </form>
   );
 }

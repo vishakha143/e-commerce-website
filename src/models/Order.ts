@@ -33,6 +33,7 @@ const OrderSchema = new Schema(
     subtotal: { type: Number, required: true },
     shippingCost: { type: Number, required: true },
     discount: { type: Number, default: 0 },
+    couponCode: { type: String, uppercase: true, trim: true },
     total: { type: Number, required: true },
     status: {
       type: String,

@@ -34,6 +34,21 @@ export async function mergeCart(userId: string, guestItems: CartItem[]) {
   return cart;
 }
 
+/** Replaces the persisted cart with the client's current one (last write wins). */
+export async function replaceCart(userId: string, items: CartItem[]) {
+  await connectDB();
+  await Cart.findOneAndUpdate(
+    { user: userId },
+    { $set: { items: items.map(toDbItem) } },
+    { upsert: true },
+  );
+}
+
+export async function clearCart(userId: string) {
+  await connectDB();
+  await Cart.updateOne({ user: userId }, { $set: { items: [] } });
+}
+
 function toDbItem(item: CartItem) {
   return {
     product: item.productId,
