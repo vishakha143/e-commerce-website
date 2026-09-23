@@ -3,9 +3,11 @@ import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/models/Order";
 import { Product } from "@/models/Product";
 import { calculateShipping } from "@/lib/pricing";
-import { canTransition } from "@/lib/orderStatus";
+import { canTransition, allowedNextPaymentStatuses } from "@/lib/orderStatus";
+import { escapeRegex } from "@/lib/utils";
+import { User } from "@/models/User";
 import type { CartItem } from "@/types/cart";
-import type { OrderStatus, ShippingAddress } from "@/types/order";
+import type { OrderStatus, PaymentStatus, ShippingAddress } from "@/types/order";
 
 export interface CreateOrderResult {
   success: boolean;
@@ -159,9 +161,114 @@ export async function getOrderById(orderId: string, userId: string) {
   return Order.findOne({ _id: orderId, user: userId }).lean();
 }
 
-export async function getAllOrders() {
+const ORDER_STATUSES: OrderStatus[] = [
+  "pending", "confirmed", "processing", "shipped", "delivered", "cancelled",
+];
+const PAYMENT_STATUSES: PaymentStatus[] = ["pending", "paid", "failed", "refunded"];
+const MAX_SEARCH_LENGTH = 100;
+
+export interface AdminOrderQuery {
+  q?: string;
+  status?: string;
+  paymentStatus?: string;
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Admin order list with search, status/payment filters and pagination.
+ * Search matches the short order number shown in the UI (last 8 hex chars
+ * of the id, or a full id) and customer name/email. Filter values are
+ * checked against the enums and search text is regex-escaped, so nothing
+ * from the query string reaches Mongo as an operator or pattern.
+ */
+export async function listOrdersAdmin(query: AdminOrderQuery = {}) {
   await connectDB();
-  return Order.find().sort({ createdAt: -1 }).populate("user", "name email").lean();
+
+  const filter: Record<string, unknown> = {};
+  if (query.status && ORDER_STATUSES.includes(query.status as OrderStatus)) {
+    filter.status = query.status;
+  }
+  if (query.paymentStatus && PAYMENT_STATUSES.includes(query.paymentStatus as PaymentStatus)) {
+    filter.paymentStatus = query.paymentStatus;
+  }
+
+  const q = query.q?.trim();
+  if (q && q.length <= MAX_SEARCH_LENGTH) {
+    const clauses: Record<string, unknown>[] = [];
+    const idText = q.replace(/^#/, "");
+    if (/^[0-9a-f]{4,24}$/i.test(idText)) {
+      clauses.push({
+        $expr: {
+          $regexMatch: { input: { $toString: "$_id" }, regex: `${idText}$`, options: "i" },
+        },
+      });
+    }
+    const pattern = new RegExp(escapeRegex(q), "i");
+    const users = await User.find({ $or: [{ name: pattern }, { email: pattern }] })
+      .select("_id")
+      .limit(100)
+      .lean();
+    if (users.length > 0) clauses.push({ user: { $in: users.map((u) => u._id) } });
+    // No possible match at all -> force an empty result rather than ignoring the search.
+    filter.$or = clauses.length > 0 ? clauses : [{ _id: null }];
+  }
+
+  const limit = query.limit && query.limit > 0 ? query.limit : 15;
+  const page = query.page && query.page > 0 ? Math.floor(query.page) : 1;
+
+  const [orders, total] = await Promise.all([
+    Order.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate("user", "name email")
+      .lean(),
+    Order.countDocuments(filter),
+  ]);
+
+  return { orders, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) };
+}
+
+/** Payment status change, checked against the allowed transitions. */
+export async function updatePaymentStatus(
+  orderId: string,
+  next: PaymentStatus,
+): Promise<UpdateStatusResult> {
+  await connectDB();
+
+  const order = await Order.findById(orderId).lean<{ status: OrderStatus; paymentStatus: PaymentStatus }>();
+  if (!order) return { success: false, error: "Order not found." };
+
+  if (!allowedNextPaymentStatuses(order.paymentStatus, order.status).includes(next)) {
+    return {
+      success: false,
+      error: `Payment marked ${order.paymentStatus} can't be changed to ${next} on a ${order.status} order.`,
+    };
+  }
+
+  const result = await Order.updateOne(
+    { _id: orderId, paymentStatus: order.paymentStatus },
+    { $set: { paymentStatus: next } },
+  );
+  if (result.modifiedCount !== 1) {
+    return { success: false, error: "This order was just updated by someone else. Refresh and try again." };
+  }
+  return { success: true };
+}
+
+export async function updateOrderDetails(
+  orderId: string,
+  details: { trackingReference: string; adminNotes: string },
+): Promise<UpdateStatusResult> {
+  await connectDB();
+  const result = await Order.updateOne(
+    { _id: orderId },
+    { $set: { trackingReference: details.trackingReference, adminNotes: details.adminNotes } },
+    { runValidators: true },
+  );
+  if (result.matchedCount === 0) return { success: false, error: "Order not found." };
+  return { success: true };
 }
 
 export async function getOrderByIdAdmin(orderId: string) {

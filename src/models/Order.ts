@@ -51,6 +51,9 @@ const OrderSchema = new Schema(
     // duplicate; sparse so existing orders from before this field existed
     // don't collide on a shared `null` value.
     idempotencyKey: { type: String },
+    // Set by admins as an order moves through fulfilment (courier + tracking id).
+    trackingReference: { type: String, trim: true, maxlength: 100 },
+    adminNotes: { type: String, trim: true, maxlength: 2000 },
   },
   { timestamps: true },
 );
