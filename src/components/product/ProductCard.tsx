@@ -1,7 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 import { WishlistButton } from "@/components/product/WishlistButton";
+import { QuickAdd } from "@/components/product/QuickAdd";
 import type { Product } from "@/types/product";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -12,6 +14,11 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <div className="flex flex-col gap-2.5 w-full">
       <div className="relative aspect-[3/4] w-full rounded-md overflow-hidden">
+        <Link
+          href={`/product/${product.slug}`}
+          aria-label={product.name}
+          className="absolute inset-0 z-0"
+        >
         {primaryImage ? (
           <Image
             src={primaryImage.url}
@@ -26,11 +33,12 @@ export function ProductCard({ product }: { product: Product }) {
             className="absolute inset-0"
           />
         )}
+        </Link>
 
         {badge && (
           <span
             className={cn(
-              "absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide",
+              "absolute top-2.5 left-2.5 pointer-events-none px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide",
               badge === "SALE" ? "bg-[#F4E7E1] text-accent" : "bg-foreground text-background",
             )}
           >
@@ -38,11 +46,13 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         )}
 
-        <WishlistButton productId={product.id} className="absolute top-2 right-2" />
+        <WishlistButton productId={product.id} className="absolute top-2 right-2 z-10" />
       </div>
 
       <div className="flex flex-col gap-0.5">
-        <div className="text-sm font-medium text-foreground">{product.name}</div>
+        <Link href={`/product/${product.slug}`} className="text-sm font-medium text-foreground">
+          {product.name}
+        </Link>
         {color && <div className="text-[13px] text-muted-foreground">{color}</div>}
         <div className="text-xs text-muted-foreground">
           ★ {product.rating} ({product.reviewCount})
@@ -63,6 +73,8 @@ export function ProductCard({ product }: { product: Product }) {
           )}
         </div>
       </div>
+
+      <QuickAdd product={product} />
     </div>
   );
 }

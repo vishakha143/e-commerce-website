@@ -3,9 +3,9 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { Search, Heart, User, ShoppingBag, Menu } from "lucide-react";
+import { Search, Heart, ShoppingBag, Menu } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
+import { AccountMenu } from "@/components/layout/AccountMenu";
 import { useCartStore } from "@/store/cartStore";
 
 // These overlays are present on every page via the Navbar but only ever
@@ -22,7 +22,6 @@ const CartDrawer = dynamic(() =>
 );
 
 export function Navbar() {
-  const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
@@ -60,9 +59,7 @@ export function Navbar() {
             <Link href="/wishlist" aria-label="Wishlist">
               <Heart size={18} />
             </Link>
-            <Link href={session?.user ? "/account" : "/login"} aria-label="Account">
-              <User size={18} />
-            </Link>
+            <AccountMenu />
           </div>
 
           <button
