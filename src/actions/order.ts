@@ -9,6 +9,7 @@ import {
   updatePaymentStatus,
   updateOrderDetails,
 } from "@/services/orderService";
+import { clearCart } from "@/services/cartService";
 import { checkRateLimit } from "@/lib/rateLimit";
 import type { CartItem } from "@/types/cart";
 import type { OrderStatus, PaymentStatus, ShippingAddress } from "@/types/order";
@@ -51,10 +52,15 @@ export async function placeOrderAction(
     return { error: "Please fill in all address fields." };
   }
 
-  const result = await createOrder(session.user.id, items, shippingAddress, idempotencyKey);
+  const couponCode = String(formData.get("couponCode") ?? "").trim() || undefined;
+  const result = await createOrder(session.user.id, items, shippingAddress, idempotencyKey, couponCode);
   if (!result.success) {
     return { error: result.error ?? "Could not place order. Please try again." };
   }
+
+  // The bag became an order; empty the saved copy too so another device
+  // doesn't show it again. Best-effort: the order itself already succeeded.
+  await clearCart(session.user.id).catch(() => {});
 
   return { orderId: result.orderId };
 }

@@ -82,6 +82,12 @@ export default async function AdminOrderDetailPage(props: PageProps<"/admin/orde
           <span>Subtotal</span>
           <span>${order.subtotal.toFixed(2)}</span>
         </div>
+        {order.discount > 0 && (
+          <div className="flex justify-between text-sm text-[#2F6B3F]">
+            <span>Discount{order.couponCode ? ` (${order.couponCode})` : ""}</span>
+            <span>-${order.discount.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>Shipping</span>
           <span>{order.shippingCost === 0 ? "Free" : `$${order.shippingCost.toFixed(2)}`}</span>

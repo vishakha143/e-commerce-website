@@ -23,6 +23,7 @@ export function parseProductListParams(
     isNew: get("isNew") === "true" ? true : undefined,
     sale: get("sale") === "true" ? true : undefined,
     inStock: get("inStock") === "true" ? true : undefined,
+    minRating: ["4", "3"].includes(get("minRating") ?? "") ? Number(get("minRating")) : undefined,
     sort: get("sort") as ProductListParams["sort"],
     page: get("page") ? Number(get("page")) : undefined,
     limit: 12,

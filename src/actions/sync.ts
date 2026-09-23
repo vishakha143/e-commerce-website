@@ -3,7 +3,8 @@
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
-import { mergeCart, getCartByUserId } from "@/services/cartService";
+import { mergeCart, getCartByUserId, replaceCart } from "@/services/cartService";
+import { checkRateLimit } from "@/lib/rateLimit";
 import type { CartItem } from "@/types/cart";
 
 export interface SyncResult {
@@ -71,4 +72,72 @@ export async function syncUserStateAction(
   const wishlistIds = (user?.wishlist ?? []).map((id) => id.toString());
 
   return { cartItems, wishlistIds };
+}
+
+const MAX_CART_LINES = 50;
+const isObjectId = (v: unknown) => typeof v === "string" && /^[a-f\d]{24}$/i.test(v);
+const str = (v: unknown, max: number) => typeof v === "string" && v.length > 0 && v.length <= max;
+
+function isValidCartItem(i: CartItem): boolean {
+  return (
+    isObjectId(i.productId) &&
+    str(i.slug, 200) &&
+    str(i.sku, 100) &&
+    str(i.name, 300) &&
+    Number.isFinite(i.price) &&
+    i.price >= 0 &&
+    Number.isInteger(i.quantity) &&
+    i.quantity >= 1 &&
+    i.quantity <= 99 &&
+    (i.color === undefined || typeof i.color === "string") &&
+    (i.size === undefined || typeof i.size === "string")
+  );
+}
+
+/**
+ * Persists the client's current cart to the account so it follows the user
+ * across devices. Prices stored here are display-only: orders always
+ * recompute price server-side.
+ */
+export async function saveCartAction(items: CartItem[]): Promise<{ ok: boolean }> {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false };
+  if (!Array.isArray(items) || items.length > MAX_CART_LINES || !items.every(isValidCartItem)) {
+    return { ok: false };
+  }
+
+  const limit = await checkRateLimit(`cartsave:${session.user.id}`, 300, 60 * 60 * 1000);
+  if (!limit.allowed) return { ok: false };
+
+  await replaceCart(session.user.id, items);
+  return { ok: true };
+}
+
+/** Current persisted cart, for refreshing a tab that was in the background. */
+export async function fetchCartAction(): Promise<CartItem[] | null> {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+  await connectDB();
+  const cart = (await getCartByUserId(session.user.id)) as {
+    items: {
+      product: { toString(): string };
+      slug: string;
+      sku: string;
+      name: string;
+      priceAtAddition: number;
+      quantity: number;
+      color?: string;
+      size?: string;
+    }[];
+  } | null;
+  return (cart?.items ?? []).map((item) => ({
+    productId: item.product.toString(),
+    slug: item.slug,
+    sku: item.sku,
+    name: item.name,
+    price: item.priceAtAddition,
+    quantity: item.quantity,
+    color: item.color,
+    size: item.size,
+  }));
 }

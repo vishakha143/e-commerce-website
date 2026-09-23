@@ -10,10 +10,37 @@ import type { Product } from "@/types/product";
 
 const POPULAR_SEARCHES = ["New Arrivals", "Denim", "Accessories", "Sale"];
 
+const RECENT_KEY = "recent-searches";
+const MAX_RECENT = 5;
+
+// Storage can be unavailable (private mode, blocked); recents are a
+// convenience, so every access is wrapped and failures are ignored.
+function readRecent(): string[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(raw)
+      ? raw.filter((t): t is string => typeof t === "string").slice(0, MAX_RECENT)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecent(terms: string[]) {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(terms));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [suggested, setSuggested] = useState<Product[]>([]);
+  // Bumped after writes so the derived `recent` list below re-reads storage.
+  const [, setRecentVersion] = useState(0);
+  const recent = open ? readRecent() : [];
 
   useEffect(() => {
     if (!open) return;
@@ -21,9 +48,16 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   }, [open]);
 
   function submit(term: string) {
-    if (!term.trim()) return;
+    const clean = term.trim().slice(0, 100);
+    if (!clean) return;
+    const next = [clean, ...readRecent().filter((t) => t.toLowerCase() !== clean.toLowerCase())].slice(
+      0,
+      MAX_RECENT,
+    );
+    writeRecent(next);
+    setRecentVersion((v) => v + 1);
     onClose();
-    router.push(`/search?q=${encodeURIComponent(term.trim())}`);
+    router.push(`/search?q=${encodeURIComponent(clean)}`);
   }
 
   return (
@@ -51,7 +85,37 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       </div>
 
       <div className="flex flex-col md:flex-row gap-9 p-7">
-        <div className="w-full md:w-[220px] shrink-0">
+        <div className="w-full md:w-[220px] shrink-0 flex flex-col gap-6">
+          {recent.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs font-semibold tracking-wide text-muted-foreground">RECENT</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    writeRecent([]);
+                    setRecentVersion((v) => v + 1);
+                  }}
+                  className="text-xs text-muted-foreground underline cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {recent.map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => submit(term)}
+                    className="px-3 py-1.5 border border-border rounded-full text-xs text-foreground cursor-pointer"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
           <div className="text-xs font-semibold tracking-wide text-muted-foreground mb-2.5">
             POPULAR
           </div>
@@ -66,6 +130,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 {term}
               </button>
             ))}
+          </div>
           </div>
         </div>
 

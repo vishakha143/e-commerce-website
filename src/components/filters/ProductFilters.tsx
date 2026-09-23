@@ -91,6 +91,27 @@ export function ProductFilters({
         In stock only
       </Link>
 
+      <div>
+        <div className="text-sm font-semibold text-foreground mb-2.5">Rating</div>
+        <div className="flex flex-col gap-1.5">
+          {[4, 3].map((n) => (
+            <Link
+              key={n}
+              href={hrefWith("minRating", String(n))}
+              className={cn(
+                "text-sm",
+                searchParams.minRating === String(n)
+                  ? "font-semibold text-foreground"
+                  : "text-foreground/80",
+              )}
+            >
+              {"★".repeat(n)}
+              {"☆".repeat(5 - n)} &amp; up
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {facets.sizes.length > 0 && (
         <div>
           <div className="text-sm font-semibold text-foreground mb-2.5">Size</div>
