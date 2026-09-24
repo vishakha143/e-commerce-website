@@ -10,8 +10,10 @@ export interface ProductFacets {
 
 export interface CategoryLink {
   label: string;
-  /** Path only; the current filters are carried over automatically. */
-  path: string;
+  /** Route to navigate to; the current filters are carried over automatically. */
+  path?: string;
+  /** Alternative to `path` for pages (search) where category is a query param: set/clear params on the current page. */
+  set?: Record<string, string | null>;
   active: boolean;
 }
 
@@ -61,11 +63,18 @@ export function ProductFilters({
   }
 
   /** Switch category but keep the shopper's other filters (and New/Sale mode). */
-  function categoryHref(path: string) {
+  function categoryHref(link: CategoryLink) {
     const params = currentParams();
     params.delete("page");
+    if (link.set) {
+      for (const [key, value] of Object.entries(link.set)) {
+        if (value === null) params.delete(key);
+        else params.set(key, value);
+      }
+    }
+    const target = link.path ?? basePath;
     const qs = params.toString();
-    return qs ? `${path}?${qs}` : path;
+    return qs ? `${target}?${qs}` : target;
   }
 
   const otherParams = Object.entries(searchParams).filter(
@@ -78,9 +87,9 @@ export function ProductFilters({
         <Group title="Category">
           <ul className="flex flex-col gap-2">
             {categoryLinks.map((link) => (
-              <li key={link.path}>
+              <li key={link.label}>
                 <Link
-                  href={categoryHref(link.path)}
+                  href={categoryHref(link)}
                   aria-current={link.active ? "page" : undefined}
                   className={cn(
                     "flex items-center justify-between text-sm",

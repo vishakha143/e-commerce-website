@@ -21,7 +21,7 @@ export function FilterDrawer({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="md:hidden flex items-center gap-2 text-sm font-medium text-foreground border border-border bg-card rounded-md px-3.5 py-2 cursor-pointer"
+        className="flex items-center gap-2 text-sm font-medium text-foreground border border-border bg-card rounded-md px-3.5 py-2 cursor-pointer hover:border-foreground transition-colors"
       >
         <SlidersHorizontal size={15} />
         Filters

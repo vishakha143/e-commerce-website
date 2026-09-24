@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { Search, Heart, ShoppingBag, Menu } from "lucide-react";
@@ -9,6 +10,7 @@ import { CATEGORY_TREE } from "@/lib/categories";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { MegaMenu } from "@/components/layout/MegaMenu";
 import { cn } from "@/lib/utils";
 
 // These overlays are present on every page via the Navbar but only ever
@@ -34,6 +36,7 @@ function CountBadge({ count }: { count: number }) {
 }
 
 export function Navbar() {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -93,49 +96,18 @@ export function Navbar() {
                       "relative flex items-center px-3.5 text-[13px] font-medium tracking-wide text-foreground transition-colors",
                       "after:absolute after:left-3.5 after:right-3.5 after:bottom-[18px] after:h-px after:bg-foreground after:scale-x-0 after:origin-left after:transition-transform group-hover:after:scale-x-100 group-focus-within:after:scale-x-100",
                       item.label === "Sale" && "text-accent",
+                      pathname === item.href.split("?")[0] &&
+                        !item.href.includes("?") &&
+                        "after:scale-x-100",
+                      pathname.startsWith(item.href) &&
+                        item.href.startsWith("/category/") &&
+                        "after:scale-x-100",
                     )}
                   >
                     {item.label}
                   </Link>
 
-                  {category && (
-                    <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-opacity duration-150 absolute left-0 right-0 top-full bg-card border-b border-border shadow-[0_12px_24px_rgba(0,0,0,0.06)]">
-                      <div className="max-w-[1600px] mx-auto px-8 py-7 flex gap-16">
-                        <div>
-                          <div className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground mb-3">
-                            {category.name.toUpperCase()}
-                          </div>
-                          <ul className="flex flex-col gap-2">
-                            {category.children?.map((sub) => (
-                              <li key={sub.slug}>
-                                <Link
-                                  href={`/category/${category.slug}/${sub.slug}`}
-                                  className="text-sm text-foreground hover:text-accent transition-colors"
-                                >
-                                  {sub.name}
-                                </Link>
-                              </li>
-                            ))}
-                            <li className="pt-1">
-                              <Link
-                                href={item.href}
-                                className="text-sm font-semibold text-foreground underline underline-offset-4"
-                              >
-                                Shop all {category.name} →
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                        <div className="text-sm text-muted-foreground max-w-[240px] leading-relaxed">
-                          <div className="font-display text-lg text-foreground mb-1">
-                            Made to be lived in.
-                          </div>
-                          Everyday pieces in {category.name.toLowerCase()} —
-                          easy 30-day returns on all of it.
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {category && <MegaMenu category={category} />}
                 </div>
               );
             })}

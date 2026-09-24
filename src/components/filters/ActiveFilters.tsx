@@ -19,6 +19,11 @@ export function ActiveFilters({
 }) {
   const chips: { key: string; label: string; remove: string[] }[] = [];
 
+  // On search, category is a query param, so it is a removable chip like the others.
+  if (basePath === "/search" && searchParams.category) {
+    chips.push({ key: "category", label: searchParams.category, remove: ["category", "subcategory"] });
+  }
+
   // On /shop the page itself is Sale / New Arrivals; on a category page opened
   // from one of those, keep the mode visible (and removable) as a chip.
   if (basePath !== "/shop") {
@@ -57,6 +62,7 @@ export function ActiveFilters({
     "minRating",
     "minPrice",
     "maxPrice",
+    ...(basePath === "/search" ? ["category", "subcategory"] : []),
     ...(basePath !== "/shop" ? ["sale", "isNew"] : []),
   ]);
 
@@ -67,7 +73,7 @@ export function ActiveFilters({
           key={chip.key}
           href={hrefWithout(chip.remove)}
           aria-label={`Remove filter: ${chip.label}`}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:border-foreground"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium capitalize text-foreground hover:border-foreground"
         >
           {chip.label}
           <X size={12} aria-hidden />
