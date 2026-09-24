@@ -12,7 +12,7 @@ export default function CartPage() {
 
   return (
     <div className="px-4 md:px-8 py-8 max-w-[1600px] mx-auto w-full">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Your Bag ({count})</h1>
+      <h1 className="font-display text-3xl font-bold text-foreground mb-6">Your bag ({count})</h1>
 
       {items.length > 0 ? (
         <div className="flex flex-col md:flex-row gap-8">

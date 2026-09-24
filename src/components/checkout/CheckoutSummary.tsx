@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useCartStore } from "@/store/cartStore";
+import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 import { calculateShipping } from "@/lib/pricing";
 import { CouponField, type AppliedCoupon } from "@/components/checkout/CouponField";
 
@@ -19,15 +21,30 @@ export function CheckoutSummary({
 
   return (
     <div className="w-full md:w-[300px] shrink-0 flex flex-col gap-3.5 p-6 bg-card border border-border rounded-lg self-start">
-      <div className="text-base font-bold text-foreground">Order Summary</div>
+      <div className="font-display text-xl font-bold text-foreground">Order summary</div>
 
-      <div className="flex flex-col gap-2 max-h-[240px] overflow-y-auto">
+      <div className="flex flex-col gap-3 max-h-[280px] overflow-y-auto">
         {items.map((item) => (
-          <div key={item.sku} className="flex justify-between text-sm text-foreground">
-            <span className="truncate pr-2">
-              {item.name} × {item.quantity}
-            </span>
-            <span className="shrink-0">${(item.price * item.quantity).toFixed(2)}</span>
+          <div key={item.sku} className="flex items-center gap-3 text-sm text-foreground">
+            <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded bg-muted">
+              {item.image ? (
+                <Image src={item.image} alt="" fill sizes="44px" className="object-cover" />
+              ) : (
+                <PlaceholderImage className="absolute inset-0" />
+              )}
+              <span className="absolute -top-0 -right-0 rounded-bl bg-foreground px-1 text-[10px] font-semibold text-background">
+                {item.quantity}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate">{item.name}</div>
+              {(item.color || item.size) && (
+                <div className="truncate text-xs text-muted-foreground">
+                  {[item.color, item.size].filter(Boolean).join(" · ")}
+                </div>
+              )}
+            </div>
+            <span className="shrink-0 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
           </div>
         ))}
       </div>

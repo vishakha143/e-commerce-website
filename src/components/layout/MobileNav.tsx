@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
 import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
+import { CATEGORY_TREE } from "@/lib/categories";
 import { Drawer } from "@/components/ui/Drawer";
 import { signOutAndClearLocalState } from "@/lib/clientAuth";
 
@@ -49,17 +50,45 @@ export function MobileNav({
           Search products...
         </Link>
 
-        <nav className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="py-2 text-[15px] font-medium text-foreground"
-              onClick={onClose}
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav className="flex flex-col">
+          {NAV_ITEMS.map((item) => {
+            const category = CATEGORY_TREE.find((c) => item.href === `/category/${c.slug}`);
+            if (!category) {
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`py-3 text-[15px] font-medium border-b border-border ${item.label === "Sale" ? "text-accent" : "text-foreground"}`}
+                  onClick={onClose}
+                >
+                  {item.label}
+                </Link>
+              );
+            }
+            return (
+              <details key={item.label} className="group border-b border-border">
+                <summary className="flex cursor-pointer list-none items-center justify-between py-3 text-[15px] font-medium text-foreground [&::-webkit-details-marker]:hidden">
+                  {item.label}
+                  <span aria-hidden className="text-lg leading-none transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <div className="flex flex-col gap-2.5 pb-3 pl-3">
+                  <Link href={item.href} onClick={onClose} className="text-sm font-semibold text-foreground">
+                    Shop all {category.name}
+                  </Link>
+                  {category.children?.map((sub) => (
+                    <Link
+                      key={sub.slug}
+                      href={`/category/${category.slug}/${sub.slug}`}
+                      onClick={onClose}
+                      className="text-sm text-muted-foreground"
+                    >
+                      {sub.name}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            );
+          })}
         </nav>
 
         <div className="h-px bg-border" />
