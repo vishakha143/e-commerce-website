@@ -11,6 +11,7 @@ import {
   setProductPublished,
   getProducts,
   getProductsByIds,
+  getSearchSuggestions,
 } from "@/services/productService";
 
 export interface ProductFormState {
@@ -115,6 +116,14 @@ export async function setProductPublishedAction(id: string, published: boolean) 
  */
 export async function getProductsByIdsAction(ids: string[]) {
   return getProductsByIds(ids);
+}
+
+/** Search-as-you-type. Public read; length-capped and returns at most 6 small rows. */
+export async function searchSuggestionsAction(query: string) {
+  if (typeof query !== "string") return [];
+  const q = query.trim();
+  if (q.length < 2 || q.length > 100) return [];
+  return getSearchSuggestions(q, 6);
 }
 
 export async function getSuggestedProductsAction(limit = 3) {

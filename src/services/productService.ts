@@ -10,6 +10,69 @@ const MAX_FILTER_VALUE_LENGTH = 100;
 /** Storefront visibility. `$ne: false` so products created before the flag existed stay visible. */
 const PUBLISHED = { published: { $ne: false } };
 
+const MAX_SEARCH_TOKENS = 6;
+const SEARCH_FIELDS = ["name", "brand", "tags", "category", "subcategory", "description", "variants.color"] as const;
+
+/** Very small plural trimmer: "tees" -> "tee", "dresses" -> "dress", "glass" stays. */
+function singular(token: string): string {
+  if (token.length <= 3) return token;
+  if (/(ss|sh|ch|x)es$/.test(token)) return token.slice(0, -2);
+  if (/[^s]s$/.test(token)) return token.slice(0, -1);
+  return token;
+}
+
+/**
+ * Turns a free-text query into an AND of per-word clauses, each matching any of
+ * the searchable fields as a case-insensitive substring. Unlike a text index this
+ * finds partial words ("tee" -> "T-Shirt" tags/names) and tolerates simple plurals
+ * ("sneakers" -> "sneaker"). Every token is regex-escaped, so user input can't
+ * inject a pattern or an operator.
+ */
+function buildSearchClauses(search?: string): Record<string, unknown>[] {
+  if (!search || search.length > MAX_FILTER_VALUE_LENGTH) return [];
+  const tokens = search
+    .toLowerCase()
+    .split(/[\s,]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0 && t.length <= 40)
+    .slice(0, MAX_SEARCH_TOKENS);
+
+  return tokens.map((token) => {
+    const stem = singular(token);
+    const pattern = new RegExp(escapeRegex(stem), "i");
+    return { $or: SEARCH_FIELDS.map((field) => ({ [field]: pattern })) };
+  });
+}
+
+/** Lightweight results for the search-as-you-type dropdown. */
+export async function getSearchSuggestions(query: string, limit = 6) {
+  const clauses = buildSearchClauses(query);
+  if (clauses.length === 0) return [];
+  await connectDB();
+  const docs = await Product.find({ ...PUBLISHED, $and: clauses })
+    .sort({ featured: -1, rating: -1 })
+    .limit(limit)
+    .select("name slug price compareAtPrice category images")
+    .lean<
+      {
+        name: string;
+        slug: string;
+        price: number;
+        compareAtPrice?: number;
+        category: string;
+        images?: { url: string; isPrimary?: boolean }[];
+      }[]
+    >();
+  return docs.map((d) => ({
+    name: d.name,
+    slug: d.slug,
+    price: d.price,
+    compareAtPrice: d.compareAtPrice,
+    category: d.category,
+    image: (d.images?.find((i) => i.isPrimary) ?? d.images?.[0])?.url,
+  }));
+}
+
 /**
  * Product listing with search/filter/sort/pagination — the storefront's
  * single source of product data (shop, category, search, homepage).
@@ -40,9 +103,8 @@ export async function getProducts(
   if (params.sale) filter.compareAtPrice = { $gt: 0 };
   if (params.inStock) filter["variants.stock"] = { $gt: 0 };
   if (params.minRating) filter.rating = { $gte: params.minRating };
-  if (params.search && params.search.length <= MAX_FILTER_VALUE_LENGTH) {
-    filter.$text = { $search: params.search };
-  }
+  const searchClauses = buildSearchClauses(params.search);
+  if (searchClauses.length > 0) filter.$and = searchClauses;
 
   const sortMap: Record<string, Record<string, 1 | -1>> = {
     price_asc: { price: 1 },

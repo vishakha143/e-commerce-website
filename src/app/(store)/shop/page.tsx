@@ -62,15 +62,6 @@ export default async function ShopPage(props: PageProps<"/shop">) {
       </div>
 
       <div className="flex gap-8">
-        <aside className="hidden md:block w-[220px] shrink-0">
-          <ProductFilters
-            basePath="/shop"
-            searchParams={searchParamsForLinks}
-            facets={facets}
-            categoryLinks={categoryLinks}
-          />
-        </aside>
-
         <div className="flex-1 min-w-0 flex flex-col gap-5">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
