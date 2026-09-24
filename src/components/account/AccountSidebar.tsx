@@ -44,7 +44,7 @@ export function AccountSidebar() {
         </Link>
       )}
 
-      <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible">
+      <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;

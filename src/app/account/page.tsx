@@ -60,10 +60,8 @@ export default async function AccountPage() {
           </span>
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-extrabold text-foreground">Hi, {firstName}</h1>
-            <p className="truncate text-sm text-foreground/70">
-              {session?.user?.email}
-              {since && ` · Member since ${since}`}
-            </p>
+            <p className="truncate text-sm text-foreground/70">{session?.user?.email}</p>
+            {since && <p className="text-xs text-foreground/60">Member since {since}</p>}
           </div>
         </div>
       </section>
