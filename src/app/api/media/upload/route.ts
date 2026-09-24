@@ -55,6 +55,11 @@ export async function DELETE(request: Request) {
   if (typeof publicId !== "string" || !publicId) {
     return Response.json({ error: "publicId is required" }, { status: 400 });
   }
+  // Only assets this app uploaded (under products/) can be removed through here,
+  // not anything else that happens to live in the same Cloudinary account.
+  if (!/^products\/[A-Za-z0-9_-]{1,100}$/.test(publicId)) {
+    return Response.json({ error: "Invalid publicId" }, { status: 400 });
+  }
 
   try {
     await destroyCloudinaryImage(publicId);

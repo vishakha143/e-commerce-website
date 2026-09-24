@@ -30,13 +30,22 @@ export async function syncUserStateAction(
   await connectDB();
   const userId = session.user.id;
 
-  if (guestCartItems.length > 0) {
-    await mergeCart(userId, guestCartItems);
+  // These arrays come straight from the browser's storage, so they're checked
+  // like any other input: shape, size and ids are validated, the rest dropped.
+  const safeCart = (Array.isArray(guestCartItems) ? guestCartItems : [])
+    .filter((i) => i && typeof i === "object" && isValidCartItem(i))
+    .slice(0, MAX_CART_LINES);
+  const safeWishlist = Array.from(
+    new Set((Array.isArray(guestWishlistIds) ? guestWishlistIds : []).filter(isObjectId)),
+  ).slice(0, MAX_WISHLIST);
+
+  if (safeCart.length > 0) {
+    await mergeCart(userId, safeCart);
   }
-  if (guestWishlistIds.length > 0) {
+  if (safeWishlist.length > 0) {
     await User.updateOne(
       { _id: userId },
-      { $addToSet: { wishlist: { $each: guestWishlistIds } } },
+      { $addToSet: { wishlist: { $each: safeWishlist } } },
     );
   }
 
@@ -77,6 +86,7 @@ export async function syncUserStateAction(
 }
 
 const MAX_CART_LINES = 50;
+const MAX_WISHLIST = 200;
 const isObjectId = (v: unknown) => typeof v === "string" && /^[a-f\d]{24}$/i.test(v);
 const str = (v: unknown, max: number) => typeof v === "string" && v.length > 0 && v.length <= max;
 

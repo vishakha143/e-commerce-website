@@ -5,6 +5,8 @@ declare module "next-auth" {
     user: {
       id: string;
       role: string;
+      /** ms epoch the session was created (sign-in time). */
+      issuedAt?: number;
     } & DefaultSession["user"];
   }
 
@@ -17,5 +19,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     role?: string;
+    issuedAt?: number;
   }
 }

@@ -24,6 +24,15 @@ export async function requestPasswordResetAction(
     return { error: parsed.error.issues[0]?.message ?? "Enter a valid email address." };
   }
 
+  // Per-address cap on top of the per-IP one, so many IPs can't be used to
+  // flood one person's inbox. Answers the same generic response either way.
+  const perEmail = await checkRateLimit(
+    `password-reset-email:${parsed.data.email.toLowerCase()}`,
+    3,
+    60 * 60 * 1000,
+  );
+  if (!perEmail.allowed) return { submitted: true };
+
   // Best-effort: a delivery failure (e.g. email not yet configured) must
   // not reveal account existence either, so it's swallowed here too — the
   // same generic response is always shown regardless of outcome.

@@ -23,7 +23,7 @@ async function main() {
 
   await mongoose.connect(uri);
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  const result = await User.updateOne({ email, role: "admin" }, { password: passwordHash });
+  const result = await User.updateOne({ email, role: "admin" }, { password: passwordHash, passwordChangedAt: new Date() });
 
   if (result.matchedCount === 0) {
     throw new Error(`No admin user found with email ${email}`);

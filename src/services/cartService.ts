@@ -24,7 +24,7 @@ export async function mergeCart(userId: string, guestItems: CartItem[]) {
       (item: { sku: string }) => item.sku === guestItem.sku,
     );
     if (existing) {
-      existing.quantity += guestItem.quantity;
+      existing.quantity = Math.min(99, existing.quantity + guestItem.quantity);
     } else {
       cart.items.push(toDbItem(guestItem));
     }

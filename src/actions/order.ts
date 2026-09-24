@@ -51,6 +51,17 @@ export async function placeOrderAction(
   if (Object.values(shippingAddress).some((field) => field.length === 0)) {
     return { error: "Please fill in all address fields." };
   }
+  const limits: Record<keyof ShippingAddress, number> = {
+    name: 100,
+    phone: 20,
+    address: 250,
+    city: 80,
+    state: 80,
+    pincode: 12,
+  };
+  if ((Object.keys(limits) as (keyof ShippingAddress)[]).some((k) => shippingAddress[k].length > limits[k])) {
+    return { error: "One of the address fields is too long." };
+  }
 
   const couponCode = String(formData.get("couponCode") ?? "").trim() || undefined;
   const result = await createOrder(session.user.id, items, shippingAddress, idempotencyKey, couponCode);
