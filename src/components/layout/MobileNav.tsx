@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
-import { BRAND_NAME, NAV_ITEMS } from "@/lib/constants";
+import { NAV_ITEMS } from "@/lib/constants";
 import { CATEGORY_TREE } from "@/lib/categories";
+import { Logo } from "@/components/brand/Logo";
 import { Drawer } from "@/components/ui/Drawer";
 import { signOutAndClearLocalState } from "@/lib/clientAuth";
 
@@ -34,9 +35,7 @@ export function MobileNav({
     >
       <div className="flex flex-col gap-4 p-5 overflow-y-auto">
         <div className="flex items-center justify-between">
-          <span className="text-lg font-extrabold tracking-wide">
-            {BRAND_NAME.toUpperCase()}
-          </span>
+          <Logo />
           <button aria-label="Close menu" onClick={onClose} className="cursor-pointer">
             <X size={18} />
           </button>
