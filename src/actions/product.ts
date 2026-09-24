@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/authz";
 import { productSchema } from "@/lib/validations/product";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import {
   createProduct,
   updateProduct,
@@ -123,6 +124,9 @@ export async function searchSuggestionsAction(query: string) {
   if (typeof query !== "string") return [];
   const q = query.trim();
   if (q.length < 2 || q.length > 100) return [];
+  // Public and hit on (debounced) keystrokes, so cap it per visitor.
+  const limit = await checkRateLimit(`suggest:${await getClientIp()}`, 120, 60 * 1000);
+  if (!limit.allowed) return [];
   return getSearchSuggestions(q, 6);
 }
 

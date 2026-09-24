@@ -73,9 +73,16 @@ export async function resetPassword(
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  await User.updateOne({ _id: resetToken.user }, { password: passwordHash });
+  const now = new Date();
+  await User.updateOne({ _id: resetToken.user }, { password: passwordHash, passwordChangedAt: now });
 
-  resetToken.usedAt = new Date();
+  // This link is spent, and so is every other outstanding one for the account
+  // (e.g. from a second request): a reset shouldn't leave spare links alive.
+  await PasswordResetToken.updateMany(
+    { user: resetToken.user, usedAt: { $exists: false } },
+    { $set: { usedAt: now } },
+  );
+  resetToken.usedAt = now;
   await resetToken.save();
 
   return { success: true };

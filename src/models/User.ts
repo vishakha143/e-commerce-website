@@ -20,6 +20,8 @@ const UserSchema = new Schema(
     password: { type: String, required: true },
     image: String,
     role: { type: String, enum: ["customer", "admin"], default: "customer" },
+    // Sessions issued before this moment are treated as signed out (admin checks).
+    passwordChangedAt: { type: Date },
     addresses: { type: [AddressSchema], default: [] },
     wishlist: { type: [Schema.Types.ObjectId], ref: "Product", default: [] },
   },

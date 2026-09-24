@@ -29,6 +29,7 @@ export const authConfig = {
       if (user) {
         token.id = (user as { id: string }).id;
         token.role = (user as { role?: string }).role;
+        token.issuedAt = Date.now();
       }
       return token;
     },
@@ -36,6 +37,7 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.issuedAt = token.issuedAt as number | undefined;
       }
       return session;
     },
