@@ -19,6 +19,13 @@ export function ActiveFilters({
 }) {
   const chips: { key: string; label: string; remove: string[] }[] = [];
 
+  // On /shop the page itself is Sale / New Arrivals; on a category page opened
+  // from one of those, keep the mode visible (and removable) as a chip.
+  if (basePath !== "/shop") {
+    if (searchParams.sale === "true") chips.push({ key: "sale", label: "On sale", remove: ["sale"] });
+    if (searchParams.isNew === "true") chips.push({ key: "isNew", label: "New arrivals", remove: ["isNew"] });
+  }
+
   for (const key of Object.keys(LABELS)) {
     const value = searchParams[key];
     if (value) chips.push({ key, label: LABELS[key](value), remove: [key] });
@@ -42,7 +49,16 @@ export function ActiveFilters({
     return qs ? `${basePath}?${qs}` : basePath;
   }
 
-  const clearAll = hrefWithout(["size", "color", "brand", "inStock", "minRating", "minPrice", "maxPrice"]);
+  const clearAll = hrefWithout([
+    "size",
+    "color",
+    "brand",
+    "inStock",
+    "minRating",
+    "minPrice",
+    "maxPrice",
+    ...(basePath !== "/shop" ? ["sale", "isNew"] : []),
+  ]);
 
   return (
     <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
@@ -62,4 +78,12 @@ export function ActiveFilters({
       </Link>
     </div>
   );
+}
+
+/** How many filters are applied (price counts once); used for the Filters button badge. */
+export function countActiveFilters(searchParams: Record<string, string | undefined>): number {
+  let n = 0;
+  for (const key of Object.keys(LABELS)) if (searchParams[key]) n++;
+  if (searchParams.minPrice || searchParams.maxPrice) n++;
+  return n;
 }

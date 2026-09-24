@@ -3,7 +3,8 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductFilters } from "@/components/filters/ProductFilters";
 import { FilterDrawer } from "@/components/filters/FilterDrawer";
 import { SortDropdown } from "@/components/filters/SortDropdown";
-import { ActiveFilters } from "@/components/filters/ActiveFilters";
+import { ActiveFilters, countActiveFilters } from "@/components/filters/ActiveFilters";
+import { CATEGORY_TREE } from "@/lib/categories";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -47,6 +48,11 @@ export default async function ShopPage(props: PageProps<"/shop">) {
   ]);
   const facets = { sizes, colors, brands };
   const searchParamsForLinks = sp as Record<string, string>;
+  const categoryLinks = [
+    { label: "All", path: "/shop", active: true },
+    ...CATEGORY_TREE.map((c) => ({ label: c.name, path: `/category/${c.slug}`, active: false })),
+  ];
+  const activeCount = countActiveFilters(searchParamsForLinks);
 
   return (
     <div className="px-4 md:px-8 py-8 max-w-[1600px] mx-auto w-full">
@@ -57,7 +63,12 @@ export default async function ShopPage(props: PageProps<"/shop">) {
 
       <div className="flex gap-8">
         <aside className="hidden md:block w-[220px] shrink-0">
-          <ProductFilters basePath="/shop" searchParams={searchParamsForLinks} facets={facets} />
+          <ProductFilters
+            basePath="/shop"
+            searchParams={searchParamsForLinks}
+            facets={facets}
+            categoryLinks={categoryLinks}
+          />
         </aside>
 
         <div className="flex-1 min-w-0 flex flex-col gap-5">
@@ -66,11 +77,12 @@ export default async function ShopPage(props: PageProps<"/shop">) {
               {result.total} {result.total === 1 ? "product" : "products"}
             </span>
             <div className="flex items-center gap-3">
-              <FilterDrawer>
+              <FilterDrawer activeCount={activeCount} resultCount={result.total}>
                 <ProductFilters
                   basePath="/shop"
                   searchParams={searchParamsForLinks}
                   facets={facets}
+                  categoryLinks={categoryLinks}
                 />
               </FilterDrawer>
               <SortDropdown />
