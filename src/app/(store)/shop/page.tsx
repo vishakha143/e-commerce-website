@@ -3,6 +3,7 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductFilters } from "@/components/filters/ProductFilters";
 import { FilterDrawer } from "@/components/filters/FilterDrawer";
 import { SortDropdown } from "@/components/filters/SortDropdown";
+import { ActiveFilters } from "@/components/filters/ActiveFilters";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -50,7 +51,7 @@ export default async function ShopPage(props: PageProps<"/shop">) {
   return (
     <div className="px-4 md:px-8 py-8 max-w-[1600px] mx-auto w-full">
       <div className="flex flex-col gap-1 mb-6">
-        <h1 className="text-2xl md:text-[26px] font-bold text-foreground">{heading}</h1>
+        <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">{heading}</h1>
         <p className="text-sm text-muted-foreground">Everyday essentials. Timeless style.</p>
       </div>
 
@@ -61,8 +62,8 @@ export default async function ShopPage(props: PageProps<"/shop">) {
 
         <div className="flex-1 min-w-0 flex flex-col gap-5">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
-              {result.total} Products
+            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+              {result.total} {result.total === 1 ? "product" : "products"}
             </span>
             <div className="flex items-center gap-3">
               <FilterDrawer>
@@ -75,6 +76,8 @@ export default async function ShopPage(props: PageProps<"/shop">) {
               <SortDropdown />
             </div>
           </div>
+
+          <ActiveFilters basePath="/shop" searchParams={searchParamsForLinks} />
 
           {result.products.length > 0 ? (
             <ProductGrid products={result.products} />

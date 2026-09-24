@@ -1,22 +1,28 @@
+import { Truck, RotateCcw, ShieldCheck, Banknote } from "lucide-react";
+
 const TRUST_ITEMS = [
-  { title: "Premium Quality", sub: "Built to last" },
-  { title: "Easy Returns", sub: "30-day, hassle-free" },
-  { title: "Secure Checkout", sub: "Shop with confidence" },
-  { title: "Free Shipping", sub: "On orders over $150" },
+  { icon: Truck, title: "Free shipping", sub: "On orders over $150" },
+  { icon: RotateCcw, title: "Easy returns", sub: "30-day, hassle-free" },
+  { icon: Banknote, title: "Cash on delivery", sub: "Pay when it arrives" },
+  { icon: ShieldCheck, title: "Secure checkout", sub: "Shop with confidence" },
 ] as const;
 
 export function TrustSection() {
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 px-4 md:px-8 py-10 border-t border-border max-w-[1600px] mx-auto w-full">
-      {TRUST_ITEMS.map((item) => (
-        <div key={item.title} className="flex gap-3 items-start">
-          <div className="w-[34px] h-[34px] rounded-full border-[1.5px] border-foreground shrink-0" />
-          <div>
-            <div className="text-sm font-semibold text-foreground">{item.title}</div>
-            <div className="text-xs text-muted-foreground">{item.sub}</div>
+    <section className="bg-[#F3EEE8] mt-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 px-4 md:px-8 py-9 max-w-[1600px] mx-auto w-full">
+        {TRUST_ITEMS.map(({ icon: Icon, title, sub }) => (
+          <div key={title} className="flex gap-3 items-center">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card text-foreground">
+              <Icon size={20} strokeWidth={1.6} aria-hidden />
+            </span>
+            <div>
+              <div className="text-sm font-semibold text-foreground">{title}</div>
+              <div className="text-xs text-muted-foreground">{sub}</div>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }

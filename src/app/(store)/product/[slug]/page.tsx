@@ -9,6 +9,9 @@ import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 import { getProductBySlug } from "@/services/productService";
 import { findCategory, findSubcategory } from "@/lib/categories";
 import { SITE_URL } from "@/lib/constants";
+import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING_COST } from "@/lib/pricing";
+import { Accordion } from "@/components/ui/Accordion";
+import { Truck, RotateCcw, Banknote } from "lucide-react";
 
 export async function generateMetadata(
   props: PageProps<"/product/[slug]">,
@@ -110,12 +113,12 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
         {` / ${product.name}`}
       </p>
 
-      <div className="flex flex-col md:flex-row gap-11">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-10 lg:gap-16">
         <ProductGallery product={product} />
 
-        <div className="flex-1 flex flex-col gap-[18px] max-w-[420px] min-w-0">
+        <div className="flex-1 flex flex-col gap-5 max-w-[480px] min-w-0">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
+            <h1 className="font-display text-3xl font-bold leading-tight text-foreground">{product.name}</h1>
             <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground">
               <a href="#reviews" className="hover:underline">
                 ★ {product.rating} ({product.reviewCount} reviews)
@@ -144,20 +147,46 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
 
           <ProductPurchasePanel product={product} />
 
-          <div className="flex flex-col gap-2 pt-2 border-t border-border text-sm text-muted-foreground">
-            <div>Free delivery on orders over $150</div>
-            <div>30-day easy returns</div>
-            <div>Secure checkout · Cash on delivery available</div>
-          </div>
+          <ul className="grid grid-cols-3 gap-2 text-center text-[11px] text-muted-foreground">
+            <li className="flex flex-col items-center gap-1.5 rounded-lg bg-muted px-2 py-3">
+              <Truck size={18} strokeWidth={1.6} aria-hidden />
+              Free shipping ${FREE_SHIPPING_THRESHOLD}+
+            </li>
+            <li className="flex flex-col items-center gap-1.5 rounded-lg bg-muted px-2 py-3">
+              <RotateCcw size={18} strokeWidth={1.6} aria-hidden />
+              30-day returns
+            </li>
+            <li className="flex flex-col items-center gap-1.5 rounded-lg bg-muted px-2 py-3">
+              <Banknote size={18} strokeWidth={1.6} aria-hidden />
+              Cash on delivery
+            </li>
+          </ul>
 
-          {product.description && (
-            <div className="border-t border-border pt-4">
-              <div className="text-sm font-semibold text-foreground mb-2">Description</div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {product.description}
-              </p>
-            </div>
-          )}
+          <div className="mt-1">
+            {product.description && (
+              <Accordion title="Description" defaultOpen>
+                <p>{product.description}</p>
+                {product.tags && product.tags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {product.tags.map((tag: string) => (
+                      <span key={tag} className="rounded-full bg-muted px-2.5 py-1 text-[11px] text-foreground/70">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Accordion>
+            )}
+            <Accordion title="Delivery & returns" defaultOpen={!product.description}>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  Free delivery on orders over ${FREE_SHIPPING_THRESHOLD}; otherwise a flat ${STANDARD_SHIPPING_COST}.
+                </li>
+                <li>Easy returns within 30 days of delivery.</li>
+                <li>Pay by cash on delivery when your order arrives.</li>
+              </ul>
+            </Accordion>
+          </div>
         </div>
       </div>
 

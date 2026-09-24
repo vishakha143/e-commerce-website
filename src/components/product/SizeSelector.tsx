@@ -19,9 +19,6 @@ export function SizeSelector({
     <div>
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-foreground">Size</span>
-        <span className="text-xs font-medium text-foreground underline cursor-pointer">
-          Size Guide
-        </span>
       </div>
       <div className="flex flex-wrap gap-2 mt-2">
         {sizes.map((size) => {

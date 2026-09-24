@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Minus, Plus } from "lucide-react";
 import { ColorSelector } from "@/components/product/ColorSelector";
 import { SizeSelector } from "@/components/product/SizeSelector";
 import { AddToCartButton } from "@/components/product/AddToCartButton";
@@ -63,8 +64,24 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       quantity: qty,
       color: selectedVariant.color,
       size: selectedVariant.size,
+      image: (product.images.find((img) => img.isPrimary) ?? product.images[0])?.url,
     });
   }
+
+  // Phones: once the main button scrolls out of view, keep a compact bar pinned
+  // to the bottom so buying is always one tap away.
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [showSticky, setShowSticky] = useState(false);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => {
+      // Show only after it has scrolled up past the top (not while still below the fold).
+      setShowSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="flex flex-col gap-5">
@@ -78,34 +95,48 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       />
 
       {stock > 0 && stock <= 5 && (
-        <p className="text-sm font-semibold text-accent">Only {stock} left</p>
+        <p className="text-sm font-semibold text-accent">Only {stock} left — order soon</p>
       )}
 
       <div>
         <div className="text-sm font-medium text-foreground mb-2">Quantity</div>
-        <div className="flex items-center w-[110px] border border-border rounded-md overflow-hidden">
+        <div className="inline-flex items-center border border-border rounded-md overflow-hidden bg-card">
           <button
             type="button"
+            aria-label="Decrease quantity"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="flex-1 h-9 text-sm font-semibold cursor-pointer"
+            className="h-10 w-10 flex items-center justify-center cursor-pointer hover:bg-muted"
           >
-            −
+            <Minus size={14} />
           </button>
-          <div className="flex-1 text-center text-sm">{qty}</div>
+          <div className="w-10 text-center text-sm font-medium" aria-live="polite">
+            {qty}
+          </div>
           <button
             type="button"
-            onClick={() => setQty((q) => q + 1)}
-            className="flex-1 h-9 text-sm font-semibold cursor-pointer"
+            aria-label="Increase quantity"
+            onClick={() => setQty((q) => Math.min(99, q + 1))}
+            className="h-10 w-10 flex items-center justify-center cursor-pointer hover:bg-muted"
           >
-            +
+            <Plus size={14} />
           </button>
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div ref={ctaRef} className="flex gap-3">
         <AddToCartButton stock={stock} onAdd={handleAdd} />
         <WishlistButton productId={product.id} size="lg" />
       </div>
+
+      {showSticky && stock > 0 && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center gap-3 border-t border-border bg-card/95 backdrop-blur px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="min-w-0">
+            <div className="truncate text-xs text-muted-foreground">{product.name}</div>
+            <div className="text-base font-bold text-foreground">${product.price}</div>
+          </div>
+          <AddToCartButton stock={stock} onAdd={handleAdd} className="!flex-none px-6 py-3" />
+        </div>
+      )}
     </div>
   );
 }

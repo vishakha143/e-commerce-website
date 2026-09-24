@@ -6,6 +6,7 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductFilters } from "@/components/filters/ProductFilters";
 import { FilterDrawer } from "@/components/filters/FilterDrawer";
 import { SortDropdown } from "@/components/filters/SortDropdown";
+import { ActiveFilters } from "@/components/filters/ActiveFilters";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -95,11 +96,39 @@ export default async function CategoryPage(props: PageProps<"/category/[...slug]
         {subcategory ? <> / {subcategory.name}</> : ""}
       </p>
       <div className="flex flex-col gap-1 mb-6">
-        <h1 className="text-2xl md:text-[26px] font-bold text-foreground">
+        <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
           {subcategory?.name ?? category.name}
         </h1>
         <p className="text-sm text-muted-foreground">Everyday essentials. Timeless style.</p>
       </div>
+
+      {category.children && category.children.length > 0 && (
+        <nav aria-label="Subcategories" className="md:hidden -mx-4 px-4 mb-5 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Link
+            href={`/category/${categorySlug}`}
+            className={cn(
+              "shrink-0 rounded-full border px-4 py-2 text-xs font-semibold",
+              !subcategorySlug ? "bg-foreground text-background border-foreground" : "bg-card text-foreground border-border",
+            )}
+          >
+            All
+          </Link>
+          {category.children.map((child) => (
+            <Link
+              key={child.slug}
+              href={`/category/${categorySlug}/${child.slug}`}
+              className={cn(
+                "shrink-0 rounded-full border px-4 py-2 text-xs font-semibold",
+                subcategorySlug === child.slug
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-card text-foreground border-border",
+              )}
+            >
+              {child.name}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <div className="flex gap-8">
         <aside className="hidden md:flex w-[220px] shrink-0 flex-col gap-6">
@@ -129,8 +158,8 @@ export default async function CategoryPage(props: PageProps<"/category/[...slug]
 
         <div className="flex-1 min-w-0 flex flex-col gap-5">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
-              {result.total} Products
+            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+              {result.total} {result.total === 1 ? "product" : "products"}
             </span>
             <div className="flex items-center gap-3">
               <FilterDrawer>
@@ -143,6 +172,8 @@ export default async function CategoryPage(props: PageProps<"/category/[...slug]
               <SortDropdown />
             </div>
           </div>
+
+          <ActiveFilters basePath={basePath} searchParams={searchParamsForLinks} />
 
           {result.products.length > 0 ? (
             <ProductGrid products={result.products} />

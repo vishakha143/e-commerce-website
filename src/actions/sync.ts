@@ -55,6 +55,7 @@ export async function syncUserStateAction(
       quantity: number;
       color?: string;
       size?: string;
+      image?: string;
     }[];
   } | null;
 
@@ -67,6 +68,7 @@ export async function syncUserStateAction(
     quantity: item.quantity,
     color: item.color,
     size: item.size,
+    image: item.image,
   }));
 
   const wishlistIds = (user?.wishlist ?? []).map((id) => id.toString());
@@ -90,7 +92,9 @@ function isValidCartItem(i: CartItem): boolean {
     i.quantity >= 1 &&
     i.quantity <= 99 &&
     (i.color === undefined || typeof i.color === "string") &&
-    (i.size === undefined || typeof i.size === "string")
+    (i.size === undefined || typeof i.size === "string") &&
+    // Display-only, but it is rendered in <img>/next-image: only accept http(s) or same-site paths.
+    (i.image === undefined || (typeof i.image === "string" && i.image.length <= 500 && /^(https:\/\/res\.cloudinary\.com\/|\/(?!\/))/.test(i.image)))
   );
 }
 
@@ -128,6 +132,7 @@ export async function fetchCartAction(): Promise<CartItem[] | null> {
       quantity: number;
       color?: string;
       size?: string;
+      image?: string;
     }[];
   } | null;
   return (cart?.items ?? []).map((item) => ({
@@ -139,5 +144,6 @@ export async function fetchCartAction(): Promise<CartItem[] | null> {
     quantity: item.quantity,
     color: item.color,
     size: item.size,
+    image: item.image,
   }));
 }

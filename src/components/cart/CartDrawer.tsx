@@ -17,7 +17,7 @@ export function CartDrawer() {
   return (
     <Drawer open={isOpen} onClose={closeDrawer} side="right" ariaLabel="Shopping bag">
       <div className="flex items-center justify-between px-[22px] py-5 border-b border-border">
-        <span className="text-[15px] font-bold text-foreground">Your Bag ({count})</span>
+        <span className="font-display text-lg font-bold text-foreground">Your bag ({count})</span>
         <button
           type="button"
           onClick={closeDrawer}
@@ -30,7 +30,9 @@ export function CartDrawer() {
 
       <div className="flex-1 overflow-y-auto px-[22px] py-4 flex flex-col gap-[18px]">
         {items.length > 0 ? (
-          items.map((item) => <CartItem key={item.sku} item={item} variant="drawer" />)
+          items.map((item) => (
+            <CartItem key={item.sku} item={item} variant="drawer" onNavigate={closeDrawer} />
+          ))
         ) : (
           <EmptyState
             title="Your bag is empty"
@@ -50,7 +52,7 @@ export function CartDrawer() {
 
       {items.length > 0 && (
         <div className="px-[22px] py-[18px] border-t border-border">
-          <CartSummary variant="drawer" />
+          <CartSummary variant="drawer" onNavigate={closeDrawer} />
         </div>
       )}
     </Drawer>

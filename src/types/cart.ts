@@ -7,4 +7,6 @@ export interface CartItem {
   quantity: number;
   color?: string;
   size?: string;
+  /** Primary product photo, for thumbnails in the bag. Display-only. */
+  image?: string;
 }

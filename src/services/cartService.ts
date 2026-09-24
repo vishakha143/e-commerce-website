@@ -57,6 +57,7 @@ function toDbItem(item: CartItem) {
     slug: item.slug,
     color: item.color,
     size: item.size,
+    image: item.image,
     priceAtAddition: item.price,
     quantity: item.quantity,
   };
