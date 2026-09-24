@@ -10,6 +10,7 @@ import { CATEGORY_TREE } from "@/lib/categories";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { Logo } from "@/components/brand/Logo";
 import { MegaMenu } from "@/components/layout/MegaMenu";
 import { cn } from "@/lib/utils";
 
@@ -75,9 +76,10 @@ export function Navbar() {
 
           <Link
             href="/"
-            className="font-display text-xl md:text-2xl font-bold tracking-[0.14em] text-foreground absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
+            aria-label={`${BRAND_NAME} home`}
+            className="text-foreground absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
           >
-            {BRAND_NAME.toUpperCase()}
+            <Logo />
           </Link>
 
           <nav

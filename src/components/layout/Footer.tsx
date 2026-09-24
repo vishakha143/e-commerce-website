@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRAND_NAME, FOOTER_LINKS } from "@/lib/constants";
+import { Logo } from "@/components/brand/Logo";
 
 export function Footer() {
   return (
@@ -7,7 +8,7 @@ export function Footer() {
       <div className="max-w-[1600px] mx-auto px-4 md:px-11 pt-12 pb-8">
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div className="flex flex-col gap-3 max-w-[300px]">
-            <div className="font-display text-2xl font-bold tracking-[0.14em]">{BRAND_NAME.toUpperCase()}</div>
+            <Logo className="text-[#F5F1EC]" />
             <p className="text-sm leading-relaxed text-[#F5F1EC]/70">
               Modern essentials, made to last. Everyday pieces for every you, delivered to your door.
             </p>
