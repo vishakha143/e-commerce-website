@@ -55,8 +55,25 @@ export async function createOrder(
 ): Promise<CreateOrderResult> {
   await connectDB();
 
-  if (items.length === 0) {
+  if (!Array.isArray(items) || items.length === 0) {
     return { success: false, error: "Your bag is empty." };
+  }
+  // The bag comes from the browser, so shape and quantities are checked here
+  // rather than relying on schema validators to fail later inside the transaction.
+  if (
+    items.length > 50 ||
+    !items.every(
+      (i) =>
+        typeof i.productId === "string" &&
+        mongoose.isValidObjectId(i.productId) &&
+        typeof i.sku === "string" &&
+        i.sku.length > 0 &&
+        Number.isInteger(i.quantity) &&
+        i.quantity >= 1 &&
+        i.quantity <= 99,
+    )
+  ) {
+    return { success: false, error: "Your bag has an invalid item. Please refresh and try again." };
   }
 
   const existing = await Order.findOne({ idempotencyKey }).lean<{ _id: mongoose.Types.ObjectId }>();
