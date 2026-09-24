@@ -5,6 +5,7 @@ import { cn, safeJsonLd, buildBreadcrumbJsonLd } from "@/lib/utils";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
+import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 import { getProductBySlug } from "@/services/productService";
 import { findCategory, findSubcategory } from "@/lib/categories";
 import { SITE_URL } from "@/lib/constants";
@@ -116,7 +117,9 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
           <div>
             <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
             <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground">
-              ★ {product.rating} ({product.reviewCount} reviews)
+              <a href="#reviews" className="hover:underline">
+                ★ {product.rating} ({product.reviewCount} reviews)
+              </a>
             </div>
           </div>
 
@@ -157,6 +160,8 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
           )}
         </div>
       </div>
+
+      <ReviewsSection productId={product.id} />
 
       <RelatedProducts product={product} />
     </div>
