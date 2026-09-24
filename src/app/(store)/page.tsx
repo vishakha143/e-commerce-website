@@ -1,5 +1,6 @@
 import { Hero } from "@/components/home/Hero";
 import { CategoryShowcase } from "@/components/home/CategoryShowcase";
+import { ShopByOffer } from "@/components/home/ShopByOffer";
 import { TrendingProducts } from "@/components/home/TrendingProducts";
 import { NewArrivals } from "@/components/home/NewArrivals";
 import { ShopTheLook } from "@/components/home/ShopTheLook";
@@ -14,10 +15,15 @@ export default function Home() {
     <>
       <Hero />
       <CategoryShowcase />
+      <ShopByOffer />
       <TrendingProducts />
-      <ShopTheLook />
+      <div className="pt-16">
+        <ShopTheLook />
+      </div>
       <NewArrivals />
-      <TrustSection />
+      <div className="pt-14">
+        <TrustSection />
+      </div>
     </>
   );
 }

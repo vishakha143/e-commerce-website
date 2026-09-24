@@ -63,6 +63,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       quantity: qty,
       color: selectedVariant.color,
       size: selectedVariant.size,
+      image: (product.images.find((img) => img.isPrimary) ?? product.images[0])?.url,
     });
   }
 

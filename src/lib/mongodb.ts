@@ -21,9 +21,20 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, { bufferCommands: false });
+    // Fail fast rather than hanging for the 30s default when Atlas is briefly unreachable.
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 10000,
+    });
   }
 
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (err) {
+    // Don't cache a failed attempt: otherwise one transient network error would
+    // leave this server instance rejecting every request until it restarts.
+    cached.promise = null;
+    throw err;
+  }
   return cached.conn;
 }

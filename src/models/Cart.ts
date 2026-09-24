@@ -8,6 +8,7 @@ const CartItemSchema = new Schema(
     slug: { type: String, required: true },
     color: String,
     size: String,
+    image: String,
     priceAtAddition: { type: Number, required: true },
     quantity: { type: Number, required: true, min: 1 },
   },

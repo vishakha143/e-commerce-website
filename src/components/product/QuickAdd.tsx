@@ -3,26 +3,42 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCartStore } from "@/store/cartStore";
+import { cn } from "@/lib/utils";
 import type { Product } from "@/types/product";
 
 const BASE =
-  "w-full py-2.5 rounded-md text-[11px] font-semibold tracking-wide text-center border transition-colors";
+  "block w-full py-2.5 rounded-md text-[11px] font-semibold tracking-wide text-center border transition-colors";
 
 /**
  * One-tap add from a product card. Only products with a single purchasable
  * variant can be added directly; anything that needs a size/colour choice
  * sends the shopper to the product page instead of guessing.
+ *
+ * `overlay` is the desktop hover style that sits on top of the photo;
+ * `inline` is the always-visible button under the card for touch screens.
  */
-export function QuickAdd({ product }: { product: Product }) {
+export function QuickAdd({
+  product,
+  variant: style = "inline",
+}: {
+  product: Product;
+  variant?: "inline" | "overlay";
+}) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
 
+  const primary = product.images.find((img) => img.isPrimary) ?? product.images[0];
   const inStock = product.variants.filter((v) => v.stock > 0);
   const hasVariants = product.variants.length > 0;
 
+  const neutral =
+    style === "overlay"
+      ? "bg-card/95 backdrop-blur border-transparent text-foreground shadow-sm hover:bg-card"
+      : "border-border text-foreground";
+
   if (hasVariants && inStock.length === 0) {
     return (
-      <button type="button" disabled className={`${BASE} border-border text-muted-foreground cursor-not-allowed`}>
+      <button type="button" disabled className={cn(BASE, "border-border text-muted-foreground cursor-not-allowed", style === "overlay" && "bg-card/95")}>
         OUT OF STOCK
       </button>
     );
@@ -30,13 +46,13 @@ export function QuickAdd({ product }: { product: Product }) {
 
   if (hasVariants && inStock.length > 1) {
     return (
-      <Link href={`/product/${product.slug}`} className={`${BASE} border-border text-foreground`}>
+      <Link href={`/product/${product.slug}`} className={cn(BASE, neutral)}>
         SELECT OPTIONS
       </Link>
     );
   }
 
-  const variant = inStock[0] ?? { sku: product.slug, color: undefined, size: undefined };
+  const chosen = inStock[0] ?? { sku: product.slug, color: undefined, size: undefined };
 
   return (
     <button
@@ -45,19 +61,22 @@ export function QuickAdd({ product }: { product: Product }) {
         addItem({
           productId: product.id,
           slug: product.slug,
-          sku: variant.sku,
+          sku: chosen.sku,
           name: product.name,
           price: product.price,
           quantity: 1,
-          color: variant.color,
-          size: variant.size,
+          color: chosen.color,
+          size: chosen.size,
+          image: primary?.url,
         });
         setAdded(true);
         setTimeout(() => setAdded(false), 1500);
       }}
-      className={`${BASE} cursor-pointer ${
-        added ? "bg-[#3F6B4C] border-[#3F6B4C] text-background" : "bg-foreground border-foreground text-background"
-      }`}
+      className={cn(
+        BASE,
+        "cursor-pointer",
+        added ? "bg-[#3F6B4C] border-[#3F6B4C] text-background" : "bg-foreground border-foreground text-background",
+      )}
     >
       {added ? "ADDED ✓" : "ADD TO BAG"}
     </button>
