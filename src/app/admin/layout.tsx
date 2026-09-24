@@ -9,7 +9,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (!signedIn?.user) redirect("/login");
   // Re-verified against the database, not just the role stored in the session token.
   const session = await getAdminSession();
-  if (!session) redirect("/");
+  if (!session) {
+    // A signed-in admin whose 2-hour admin window ended goes to sign in again;
+    // anyone else is simply sent home.
+    redirect(signedIn.user.role === "admin" ? "/login?admin=1" : "/");
+  }
 
   return (
     <div className="admin-theme flex flex-col md:flex-row flex-1 min-h-screen bg-background text-foreground">

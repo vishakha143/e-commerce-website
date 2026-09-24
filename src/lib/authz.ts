@@ -2,6 +2,9 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 
+/** Admin privileges last this long after signing in; then a fresh sign-in is required. */
+export const ADMIN_SESSION_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+
 /**
  * Returns the session only if the caller is a *current* admin.
  *
@@ -14,16 +17,19 @@ export async function getAdminSession() {
   const session = await auth();
   if (session?.user?.role !== "admin" || !session.user.id) return null;
 
+  // Admin access is short-lived even though the login cookie lasts longer: a
+  // session with no sign-in time (older tokens) or one older than the limit
+  // must sign in again before it can manage the store.
+  const issuedAt = session.user.issuedAt ?? 0;
+  if (Date.now() - issuedAt > ADMIN_SESSION_MAX_AGE_MS) return null;
+
   await connectDB();
   const user = await User.findById(session.user.id)
     .select("role passwordChangedAt")
     .lean<{ role: string; passwordChangedAt?: Date }>();
   if (!user || user.role !== "admin") return null;
 
-  if (user.passwordChangedAt) {
-    const issuedAt = session.user.issuedAt ?? 0;
-    if (issuedAt < user.passwordChangedAt.getTime()) return null;
-  }
+  if (user.passwordChangedAt && issuedAt < user.passwordChangedAt.getTime()) return null;
   return session;
 }
 

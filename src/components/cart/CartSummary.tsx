@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCartStore } from "@/store/cartStore";
 import { FREE_SHIPPING_THRESHOLD, calculateShipping } from "@/lib/pricing";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 
 function ShippingProgress({ subtotal }: { subtotal: number }) {
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
@@ -44,9 +45,16 @@ export function CartSummary({
   onNavigate?: () => void;
 }) {
   const items = useCartStore((s) => s.items);
+  const isAdmin = useIsAdmin();
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
+
+  const adminNote = (
+    <p className="rounded-md bg-muted px-3 py-3 text-center text-xs text-muted-foreground">
+      Admin accounts can&apos;t place orders. Sign in with a customer account to check out.
+    </p>
+  );
 
   if (variant === "drawer") {
     return (
@@ -57,13 +65,17 @@ export function CartSummary({
           <span>${subtotal.toFixed(2)}</span>
         </div>
         <p className="text-[11px] text-muted-foreground -mt-2">Shipping and promo codes are applied at checkout.</p>
-        <Link
-          href="/checkout"
-          onClick={onNavigate}
-          className="w-full text-center py-3.5 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide"
-        >
-          CHECKOUT
-        </Link>
+        {isAdmin ? (
+          adminNote
+        ) : (
+          <Link
+            href="/checkout"
+            onClick={onNavigate}
+            className="w-full text-center py-3.5 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide"
+          >
+            CHECKOUT
+          </Link>
+        )}
         <Link
           href="/cart"
           onClick={onNavigate}
@@ -93,12 +105,16 @@ export function CartSummary({
         <span>Total</span>
         <span>${total.toFixed(2)}</span>
       </div>
-      <Link
-        href="/checkout"
-        className="w-full text-center py-4 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide"
-      >
-        PROCEED TO CHECKOUT
-      </Link>
+      {isAdmin ? (
+        adminNote
+      ) : (
+        <Link
+          href="/checkout"
+          className="w-full text-center py-4 bg-foreground text-background rounded-md text-xs font-semibold tracking-wide"
+        >
+          PROCEED TO CHECKOUT
+        </Link>
+      )}
       <p className="text-center text-[11px] text-muted-foreground">Cash on delivery · Easy 30-day returns</p>
     </div>
   );

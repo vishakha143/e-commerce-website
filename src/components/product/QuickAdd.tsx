@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 import type { Product } from "@/types/product";
 
 const BASE =
@@ -26,6 +27,7 @@ export function QuickAdd({
 }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
+  const isAdmin = useIsAdmin();
 
   const primary = product.images.find((img) => img.isPrimary) ?? product.images[0];
   const inStock = product.variants.filter((v) => v.stock > 0);
@@ -35,6 +37,15 @@ export function QuickAdd({
     style === "overlay"
       ? "bg-card/95 backdrop-blur border-transparent text-foreground shadow-sm hover:bg-card"
       : "border-border text-foreground";
+
+  // Admins browse but don't buy: send them to the product page instead of adding to a bag.
+  if (isAdmin) {
+    return (
+      <Link href={`/product/${product.slug}`} className={cn(BASE, neutral)}>
+        VIEW DETAILS
+      </Link>
+    );
+  }
 
   if (hasVariants && inStock.length === 0) {
     return (
