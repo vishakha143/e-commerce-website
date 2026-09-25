@@ -55,6 +55,14 @@ export async function createOrder(
 ): Promise<CreateOrderResult> {
   await connectDB();
 
+  // The admin account runs the store; it doesn't shop. Checked against the DB
+  // here (not just the session) so it holds no matter which caller reaches this.
+  const buyer = await User.findById(userId).select("role").lean<{ role?: string }>();
+  if (!buyer) return { success: false, error: "Account not found." };
+  if (buyer.role === "admin") {
+    return { success: false, error: "Admin accounts manage the store and can’t place orders. Use a customer account to test checkout." };
+  }
+
   if (!Array.isArray(items) || items.length === 0) {
     return { success: false, error: "Your bag is empty." };
   }

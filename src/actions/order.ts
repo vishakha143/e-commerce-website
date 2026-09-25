@@ -30,6 +30,10 @@ export async function placeOrderAction(
     return { error: "Please log in to place an order." };
   }
 
+  if (session.user.role === "admin") {
+    return { error: "Admin accounts manage the store and can’t place orders. Use a customer account to test checkout." };
+  }
+
   const rateLimit = await checkRateLimit(`order:${session.user.id}`, 10, 60 * 60 * 1000);
   if (!rateLimit.allowed) {
     return { error: "Too many orders placed recently. Please try again in a little while." };

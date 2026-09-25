@@ -46,7 +46,9 @@ export async function loginAction(
     throw err;
   }
 
-  redirect("/account");
+  // Admins land in the admin console; everyone else in their account.
+  const account = await getUserByEmail(parsed.data.email);
+  redirect(account?.role === "admin" ? "/admin" : "/account");
 }
 
 export async function registerAction(

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 
 export function AddToCartButton({
   stock,
@@ -13,6 +14,23 @@ export function AddToCartButton({
   className?: string;
 }) {
   const [added, setAdded] = useState(false);
+  const isAdmin = useIsAdmin();
+
+  if (isAdmin) {
+    return (
+      <button
+        type="button"
+        disabled
+        title="Admin accounts manage the store and can't place orders"
+        className={cn(
+          "flex-1 py-4 rounded-md text-xs font-semibold tracking-wide bg-muted text-muted-foreground cursor-not-allowed",
+          className,
+        )}
+      >
+        ADMIN VIEW ONLY
+      </button>
+    );
+  }
 
   if (stock <= 0) {
     return (

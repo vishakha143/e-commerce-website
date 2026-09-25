@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { auth } from "@/lib/auth";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 
 export const metadata: Metadata = {
@@ -6,7 +8,26 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const session = await auth();
+  if (session?.user?.role === "admin") {
+    return (
+      <div className="px-4 md:px-8 py-16 max-w-[560px] mx-auto w-full flex-1 text-center">
+        <h1 className="font-display text-3xl font-bold text-foreground">Checkout isn&apos;t available for admins</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          The admin account manages the store and doesn&apos;t place orders. To test checkout, sign in with a
+          customer account.
+        </p>
+        <Link
+          href="/admin"
+          className="mt-6 inline-block rounded-md bg-foreground px-6 py-3 text-xs font-semibold tracking-wide text-background"
+        >
+          GO TO ADMIN CONSOLE
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 md:px-8 py-8 max-w-[1200px] mx-auto w-full flex-1">
       <h1 className="font-display text-3xl font-bold text-foreground">Checkout</h1>
