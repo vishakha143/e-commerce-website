@@ -6,4 +6,7 @@ export const COLOR_HEX: Record<string, string> = {
   Brown: "#6B4A34",
   Grey: "#8A8680",
   Stone: "#B7B2A8",
+  Pink: "#E8A6B0",
+  Cream: "#F3E9D7",
+  Tan: "#C29A6B",
 };
