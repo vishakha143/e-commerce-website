@@ -11,7 +11,7 @@ See [docs/architecture.md](docs/architecture.md) for the full architecture and i
    ```bash
    npm run seed
    ```
-   Creates an admin login at `admin@fashion.test` / `admin12345`.
+   Creates an admin login at `admin@fashion.test` / `--------`.
 3. Run the dev server:
    ```bash
    npm run dev
